@@ -11,21 +11,14 @@ void IotKernel::MQTT_setup(){
 
   this->MQTT_client.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
   this->MQTT_client.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
+
+  // MQTT topics
+  String mqtt_base_topic = "/" + this->config.mqtt.username + "/" + this->device_name;
+  this->mqtt_status_topic = mqtt_base_topic + "/status";
+  this->mqtt_command_topic = mqtt_base_topic + "/command";
 }
 
 
-
-String IotKernel::get_mqtt_base_topic(){
-  return "/" + this->config.mqtt.username + "/" + this->get_device_name();
-}
-
-String IotKernel::get_mqtt_status_topic(){
-  return this->get_mqtt_base_topic() + "/status";
-}
-
-String IotKernel::get_mqtt_command_topic(){
-  return this->get_mqtt_base_topic() + "/command";
-}
 
 
 void IotKernel::MQTT_connection_manager(){
@@ -40,8 +33,8 @@ void IotKernel::MQTT_connection_manager(){
       // Changed from disconnected to connected
       Serial.println("[MQTT] Connected");
 
-      Serial.println("[MQTT] Subscribing to topic " + this->get_mqtt_command_topic());
-      this->MQTT_client.subscribe(this->get_mqtt_command_topic().c_str());
+      Serial.println("[MQTT] Subscribing to topic " + this->mqtt_command_topic);
+      this->MQTT_client.subscribe(this->mqtt_command_topic.c_str());
 
       this->mqtt_publish_state();
     }
@@ -73,16 +66,12 @@ void IotKernel::MQTT_connection_manager(){
       char mqtt_last_will[MQTT_MAX_PACKET_SIZE];
       serializeJson(outbound_JSON_message, mqtt_last_will, sizeof(mqtt_last_will));
 
-//          Serial.println(this->get_device_name().c_str());
-//          Serial.println(this->config.mqtt.username.c_str());
-//          Serial.println(this->config.mqtt.password.c_str());
-//          Serial.println(this->get_mqtt_status_topic().c_str());
 
       MQTT_client.connect(
-        this->get_device_name().c_str(),
+        this->device_name.c_str(),
         this->config.mqtt.username.c_str(),
         this->config.mqtt.password.c_str(),
-        this->get_mqtt_status_topic().c_str(),
+        this->mqtt_status_topic.c_str(),
         MQTT_QOS,
         MQTT_RETAIN,
         mqtt_last_will
@@ -153,6 +142,6 @@ void IotKernel::mqtt_publish_state(){
 
   char mqtt_payload[MQTT_MAX_PACKET_SIZE];
   serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));
-  this->MQTT_client.publish(get_mqtt_status_topic().c_str(), mqtt_payload, MQTT_RETAIN);
+  this->MQTT_client.publish(this->mqtt_status_topic.c_str(), mqtt_payload, MQTT_RETAIN);
 
 }

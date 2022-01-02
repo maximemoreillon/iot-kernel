@@ -21,7 +21,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
 String IotKernel::htmlProcessor(const String& var){
 
   if(var == "IOT_KERNEL_VERSION") return IOT_KERNEL_VERSION;
-  else if(var == "DEVICE_NAME") return this->get_device_name();
+  else if(var == "DEVICE_NAME") return this->device_name;
   else if(var == "DEVICE_TYPE") return this->device_type;
   else if(var == "DEVICE_FIRMWARE_VERSION") return this->firmware_version;
   else if(var == "DEVICE_NICKNAME") return this->config.nickname;
@@ -32,8 +32,8 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "MQTT_USERNAME") return this->config.mqtt.username;
   else if(var == "MQTT_PASSWORD") return this->config.mqtt.password;
   else if(var == "MQTT_STATUS") return this->MQTT_client.connected() ? "connected" : "disconnected";
-  else if(var == "MQTT_STATUS_TOPIC") return this->get_mqtt_status_topic();
-  else if(var == "MQTT_COMMAND_TOPIC") return this->get_mqtt_command_topic();
+  else if(var == "MQTT_STATUS_TOPIC") return this->mqtt_status_topic;
+  else if(var == "MQTT_COMMAND_TOPIC") return this->mqtt_command_topic;
 
   else if(var == "WIFI_MODE") return this->get_wifi_mode();
   else if(var == "WIFI_SSID") return this->config.wifi.ssid;

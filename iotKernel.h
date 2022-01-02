@@ -61,6 +61,7 @@ class IotKernel {
     int found_wifi_count;
     boolean reboot_pending;
     String device_type;
+    String device_name;
     String firmware_version;
 
 
@@ -106,6 +107,8 @@ class IotKernel {
     AsyncWebServer web_server;
     PubSubClient MQTT_client;
     String device_state;
+    String mqtt_status_topic;
+    String mqtt_command_topic;
 
     IotKernel(String, String);
     void init();

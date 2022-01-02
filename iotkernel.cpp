@@ -2,10 +2,12 @@
 
 IotKernel::IotKernel(String type, String version): web_server(WEB_SERVER_PORT){
   // Constructor
+  // Note how the web server is instantiated
 
   this->MQTT_client.setClient(this->wifi_client);
 
   this->device_type = type;
+  this->device_name = this->device_type + "-" + String(ESP.getChipId(), HEX);
   this->firmware_version = version;
 
   this->device_state = "off";
@@ -26,8 +28,6 @@ void IotKernel::init(){
   this->MQTT_setup();
   this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
   this->web_server_setup();
-
-  //MDNS.begin(get_device_name().c_str());
 }
 
 void IotKernel::loop(){
@@ -36,13 +36,9 @@ void IotKernel::loop(){
   this->MQTT_client.loop();
   this->dns_server.processNextRequest();
   this->handle_reboot();
-
-  //MDNS.update();
 }
 
-String IotKernel::get_device_name(){
-  return this->device_type + "-" + String(ESP.getChipId(), HEX);
-}
+
 
 void IotKernel::delayed_reboot(){
   this->reboot_pending = true;

@@ -7,7 +7,7 @@ boolean IotKernel::wifi_connected(){
 }
 
 String IotKernel::get_softap_ssid(){
-  return this->get_device_name();
+  return this->device_name;
 }
 
 String IotKernel::get_wifi_mode(){
@@ -23,9 +23,9 @@ String IotKernel::get_wifi_mode(){
 
 void IotKernel::scan_wifi(){
   Serial.println("[Wifi] Scan start ... ");
-  
+
   this->found_wifi_count = WiFi.scanNetworks();
-  
+
   Serial.print("[Wifi] scan result: ");
   Serial.print(this->found_wifi_count);
   Serial.println(" network(s) found");
@@ -42,17 +42,17 @@ String IotKernel::format_wifi_datalist_options(){
 
 
 void IotKernel::attempt_sta(){
-  
+
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
-  WiFi.hostname(this->get_device_name());
+  WiFi.hostname(this->device_name);
 
   this->scan_wifi();
 
   String wifi_sta_ssid = this->config.wifi.ssid;
   String wifi_sta_password = this->config.wifi.password;
-  
+
   Serial.print("[WiFi] Attempting connection to ");
   Serial.print(wifi_sta_ssid);
   Serial.print(" with password ");
@@ -68,11 +68,11 @@ void IotKernel::attempt_sta(){
   while(millis() - now < WIFI_STA_CONNECTION_TIMEOUT && !wifi_connected()){
     delay(10); // Do nothing while connecting
   }
-  
+
 }
 
 void IotKernel::wifi_setup() {
-  
+
   Serial.println("[WiFi] Wifi starting");
   this->attempt_sta();
 
@@ -88,9 +88,9 @@ void IotKernel::wifi_setup() {
      * Create a web server
      * Direct clients to the web server upon connection to the Wifi Access point
      */
-    
+
     Serial.println("[Wifi] Cannot connect to provided WiFi, starting access point...");
-    
+
     WiFi.disconnect(true);
     WiFi.mode(WIFI_OFF);
     WiFi.persistent(false);
