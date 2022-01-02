@@ -45,6 +45,7 @@ void IotKernel::get_config_from_spiffs(){
   this->config.wifi.password = doc["wifi"]["password"].as<String>();
   this->config.mqtt.broker.host = doc["mqtt"]["broker"]["host"].as<String>();
   this->config.mqtt.broker.port = doc["mqtt"]["broker"]["port"].as<int>();
+  this->config.mqtt.broker.secure = doc["mqtt"]["broker"]["secure"].as<String>();
   this->config.mqtt.username = doc["mqtt"]["username"].as<String>();
   this->config.mqtt.password = doc["mqtt"]["password"].as<String>();
 

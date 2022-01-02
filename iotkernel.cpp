@@ -4,7 +4,7 @@ IotKernel::IotKernel(String type, String version): web_server(WEB_SERVER_PORT){
   // Constructor
   // Note how the web server is instantiated
 
-  this->MQTT_client.setClient(this->wifi_client);
+  
 
   this->device_type = type;
   this->device_name = this->device_type + "-" + String(ESP.getChipId(), HEX);
@@ -21,9 +21,11 @@ void IotKernel::init(){
 
   Serial.println("IoT Kernel init");
 
+  this->wifi_client_secure.setInsecure();
+
   this->spiffs_setup();
   this->get_config_from_spiffs();
-  this->wifi_client.setInsecure();
+
   this->wifi_setup();
   this->MQTT_setup();
   this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);

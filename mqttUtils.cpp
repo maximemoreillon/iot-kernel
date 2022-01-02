@@ -9,6 +9,26 @@ void IotKernel::MQTT_setup(){
   Serial.print(":");
   Serial.println(this->config.mqtt.broker.port);
 
+
+
+
+  if(this->config.mqtt.broker.secure == "yes") {
+    Serial.println("[MQTT] Connecting using SSL");
+    this->MQTT_client.setClient(this->wifi_client_secure);
+  }
+  else {
+    Serial.println("[MQTT] Connecting without SSL");
+    this->MQTT_client.setClient(this->wifi_client);
+  }
+
+  // IPAddress broker_ip;
+  // if (broker_ip.fromString(this->config.mqtt.broker.host.c_str())) {
+  //   this->MQTT_client.setServer(broker_ip, this->config.mqtt.broker.port);
+  // }
+  // else {
+  //   this->MQTT_client.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
+  // }
+
   this->MQTT_client.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
   this->MQTT_client.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
 
@@ -53,7 +73,9 @@ void IotKernel::MQTT_connection_manager(){
       // No need to do anything if not connected to WiFi
       if(!wifi_connected()) return;
 
-      Serial.println("[MQTT] Connecting...");
+      Serial.print("[MQTT] Connecting... (status: ");
+      Serial.print(this->MQTT_client.state());
+      Serial.println(")");
 
       // Last will
       StaticJsonDocument<MQTT_MAX_PACKET_SIZE> outbound_JSON_message;

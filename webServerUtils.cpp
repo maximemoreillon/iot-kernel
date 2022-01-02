@@ -29,6 +29,7 @@ String IotKernel::htmlProcessor(const String& var){
 
   else if(var == "MQTT_BROKER_HOST") return this->config.mqtt.broker.host;
   else if(var == "MQTT_BROKER_PORT") return String(this->config.mqtt.broker.port);
+  else if(var == "MQTT_BROKER_SECURE") return this->config.mqtt.broker.secure;
   else if(var == "MQTT_USERNAME") return this->config.mqtt.username;
   else if(var == "MQTT_PASSWORD") return this->config.mqtt.password;
   else if(var == "MQTT_STATUS") return this->MQTT_client.connected() ? "connected" : "disconnected";
@@ -105,6 +106,9 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
   JsonObject broker  = mqtt.createNestedObject("broker");
   broker["host"] = request->arg("mqtt_broker_host");
   broker["port"] = request->arg("mqtt_broker_port");
+  broker["secure"] = request->arg("mqtt_broker_secure");
+
+  Serial.println(request->arg("mqtt_broker_secure"));
 
   File configFile = LittleFS.open("/config.json", "w");
   if (!configFile) {
@@ -120,8 +124,10 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
   request->send(200, "text/html", reboot_html);
 
-  // Reboot
+  // Schedule reboot
   this->delayed_reboot();
+
+
 
 }
 

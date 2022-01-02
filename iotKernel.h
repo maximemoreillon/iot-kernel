@@ -18,7 +18,7 @@
 #define WIFI_AP_IP IPAddress(192, 168, 4, 1)
 
 // MQTT
-#define MQTT_RECONNECT_PERIOD 1000
+#define MQTT_RECONNECT_PERIOD 5000
 #define MQTT_QOS 1
 #define MQTT_RETAIN true
 
@@ -36,6 +36,7 @@ struct WifiConfig {
 struct MqttBrokerConfig {
   String host;
   int port;
+  String secure;
 };
 
 struct MqttConfig {
@@ -54,7 +55,8 @@ class IotKernel {
 
   private:
 
-    WiFiClientSecure wifi_client;
+    WiFiClient wifi_client;
+    WiFiClientSecure wifi_client_secure;
     DNSServer dns_server;
     DeviceConfig config;
 
