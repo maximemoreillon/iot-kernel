@@ -9,7 +9,7 @@
 #include <DNSServer.h> // DNS server to redirect wifi clients to the web server
 #include <ArduinoJson.h> // JSON, used for the formatting of messages sent to the server
 #include <Updater.h>
-#include <ESP8266mDNS.h>
+//#include <ESP8266mDNS.h>
 #include <LittleFS.h>
 
 

@@ -67,7 +67,7 @@ void IotKernel::MQTT_connection_manager(){
 
       outbound_JSON_message["connected"] = false;
       outbound_JSON_message["type"] = this->device_type;
-      outbound_JSON_message["firmware_version"] = this->firmware_version;
+      outbound_JSON_message["version"] = this->firmware_version;
       outbound_JSON_message["nickname"] = this->config.nickname;
 
       char mqtt_last_will[MQTT_MAX_PACKET_SIZE];
@@ -148,7 +148,8 @@ void IotKernel::mqtt_publish_state(){
   outbound_JSON_message["state"] = this->device_state;
   outbound_JSON_message["type"] = this->device_type;
   outbound_JSON_message["nickname"] = this->config.nickname;
-  outbound_JSON_message["firmware_version"] = this->firmware_version;
+  outbound_JSON_message["version"] = this->firmware_version;
+  outbound_JSON_message["address"] = WiFi.localIP().toString();
 
   char mqtt_payload[MQTT_MAX_PACKET_SIZE];
   serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));

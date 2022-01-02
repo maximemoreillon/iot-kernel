@@ -27,7 +27,7 @@ void IotKernel::init(){
   this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
   this->web_server_setup();
 
-  MDNS.begin(get_device_name().c_str());
+  //MDNS.begin(get_device_name().c_str());
 }
 
 void IotKernel::loop(){
@@ -37,7 +37,7 @@ void IotKernel::loop(){
   this->dns_server.processNextRequest();
   this->handle_reboot();
 
-  MDNS.update();
+  //MDNS.update();
 }
 
 String IotKernel::get_device_name(){

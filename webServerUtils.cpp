@@ -10,7 +10,6 @@ class CaptiveRequestHandler : public AsyncWebHandler {
     virtual ~CaptiveRequestHandler() {}
 
     bool canHandle(AsyncWebServerRequest *request){
-      //request->addInterestingHeader("ANY");
       return true;
     }
 
@@ -33,6 +32,8 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "MQTT_USERNAME") return this->config.mqtt.username;
   else if(var == "MQTT_PASSWORD") return this->config.mqtt.password;
   else if(var == "MQTT_STATUS") return this->MQTT_client.connected() ? "connected" : "disconnected";
+  else if(var == "MQTT_STATUS_TOPIC") return this->get_mqtt_status_topic();
+  else if(var == "MQTT_COMMAND_TOPIC") return this->get_mqtt_command_topic();
 
   else if(var == "WIFI_MODE") return this->get_wifi_mode();
   else if(var == "WIFI_SSID") return this->config.wifi.ssid;
