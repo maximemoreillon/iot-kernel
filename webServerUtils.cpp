@@ -58,6 +58,7 @@ void IotKernel::web_server_setup(){
 
   this->web_server.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); });
 
+  this->web_server.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); });
   this->web_server.on("/update", HTTP_POST,
     [](AsyncWebServerRequest *request) {},
     [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
@@ -65,7 +66,7 @@ void IotKernel::web_server_setup(){
     }
   );
 
-
+  this->web_server.on("/upload", HTTP_GET,[this](AsyncWebServerRequest *request) { handleUiUploadForm(request); });
   this->web_server.on("/upload", HTTP_POST,
     [](AsyncWebServerRequest *request) {},
     [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
@@ -81,6 +82,8 @@ void IotKernel::web_server_setup(){
 
   this->web_server.begin();
 }
+
+
 
 
 void IotKernel::handleNotFound(AsyncWebServerRequest *request){
@@ -131,6 +134,16 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
 }
 
+void IotKernel::handleFirmwareUpdateForm(AsyncWebServerRequest *request){
+  String html = ""
+    "<form method='POST' action='/update' enctype='multipart/form-data'>"
+      "<input type='file' name='update'>"
+      "<input type='submit' value='Upload'>"
+    "</form>";
+
+  request->send(200, "text/html", html);
+}
+
 void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
 
   if (!index){
@@ -168,6 +181,16 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
       this->delayed_reboot();
     }
   }
+}
+
+void IotKernel::handleUiUploadForm(AsyncWebServerRequest *request){
+  String html = ""
+    "<form method='POST' action='/upload' enctype='multipart/form-data'>"
+      "<input type='file' name='update'>"
+      "<input type='submit' value='Upload'>"
+    "</form>";
+
+  request->send(200, "text/html", html);
 }
 
 void IotKernel::handleUiUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){

@@ -91,7 +91,9 @@ class IotKernel {
     void web_server_setup();
     void handleNotFound(AsyncWebServerRequest*);
     void handleSettingsUpdate(AsyncWebServerRequest*);
+    void handleFirmwareUpdateForm(AsyncWebServerRequest*);
     void handleFirmwareUpdate(AsyncWebServerRequest*, const String&, size_t, uint8_t*, size_t, bool);
+    void handleUiUploadForm(AsyncWebServerRequest*);
     void handleUiUpload( AsyncWebServerRequest*, String, size_t, uint8_t*, size_t, bool);
 
     // MQTT
