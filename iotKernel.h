@@ -26,7 +26,7 @@
 #define DNS_PORT 53
 #define WEB_SERVER_PORT 80
 
-#define IOT_KERNEL_VERSION "0.1.0"
+#define IOT_KERNEL_VERSION "0.1.3"
 
 struct WifiConfig {
   String ssid;
@@ -88,28 +88,25 @@ class IotKernel {
 
     // Web server
     String htmlProcessor(const String&);
-    void web_server_setup();
+    void http_setup();
     void handleNotFound(AsyncWebServerRequest*);
     void handleSettingsUpdate(AsyncWebServerRequest*);
     void handleFirmwareUpdateForm(AsyncWebServerRequest*);
     void handleFirmwareUpdate(AsyncWebServerRequest*, const String&, size_t, uint8_t*, size_t, bool);
-    void handleUiUploadForm(AsyncWebServerRequest*);
-    void handleUiUpload( AsyncWebServerRequest*, String, size_t, uint8_t*, size_t, bool);
+    void handleUploadForm(AsyncWebServerRequest*);
+    void handleUpload( AsyncWebServerRequest*, String, size_t, uint8_t*, size_t, bool);
 
     // MQTT
-    void MQTT_setup();
-    String get_mqtt_base_topic();
-    String get_mqtt_status_topic();
-    String get_mqtt_command_topic();
-    void MQTT_connection_manager();
+    void mqtt_setup();
+    void mqtt_connection_manager();
     void mqtt_message_callback(char*, byte*, unsigned int);
 
 
 
   public:
 
-    AsyncWebServer web_server;
-    PubSubClient MQTT_client;
+    AsyncWebServer http;
+    PubSubClient mqtt;
     String device_state;
     String mqtt_status_topic;
     String mqtt_command_topic;

@@ -32,7 +32,7 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "MQTT_BROKER_SECURE") return this->config.mqtt.broker.secure;
   else if(var == "MQTT_USERNAME") return this->config.mqtt.username;
   else if(var == "MQTT_PASSWORD") return this->config.mqtt.password;
-  else if(var == "MQTT_STATUS") return this->MQTT_client.connected() ? "connected" : "disconnected";
+  else if(var == "MQTT_STATUS") return this->mqtt.connected() ? "connected" : "disconnected";
   else if(var == "MQTT_STATUS_TOPIC") return this->mqtt_status_topic;
   else if(var == "MQTT_COMMAND_TOPIC") return this->mqtt_command_topic;
 
@@ -46,41 +46,38 @@ String IotKernel::htmlProcessor(const String& var){
 }
 
 
-void IotKernel::web_server_setup(){
+void IotKernel::http_setup(){
   Serial.println("[Web server] Web server initialization");
 
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
   // using lamba because otherwise method needs to be static
-  this->web_server.serveStatic("/", LittleFS, "/www")
+  this->http.serveStatic("/", LittleFS, "/www")
     .setDefaultFile("index.html")
     .setTemplateProcessor([this](auto x) { return htmlProcessor(x); });
 
-  this->web_server.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); });
+  this->http.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); });
 
-  this->web_server.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); });
-  this->web_server.on("/update", HTTP_POST,
+  this->http.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); });
+  this->http.on("/update", HTTP_POST,
     [](AsyncWebServerRequest *request) {},
     [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
       handleFirmwareUpdate(request, filename, index, data, len, final);
     }
   );
 
-  this->web_server.on("/upload", HTTP_GET,[this](AsyncWebServerRequest *request) { handleUiUploadForm(request); });
-  this->web_server.on("/upload", HTTP_POST,
+  this->http.on("/upload", HTTP_GET,[this](AsyncWebServerRequest *request) { handleUploadForm(request); });
+  this->http.on("/upload", HTTP_POST,
     [](AsyncWebServerRequest *request) {},
     [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
-      handleUiUpload(request, filename, index, data, len, final);
+      handleUpload(request, filename, index, data, len, final);
     }
   );
 
 
-  this->web_server.onNotFound([this](AsyncWebServerRequest *request) { handleNotFound(request); });
-
-  this->web_server.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
-
-
-  this->web_server.begin();
+  this->http.onNotFound([this](AsyncWebServerRequest *request) { handleNotFound(request); });
+  this->http.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
+  this->http.begin();
 }
 
 
@@ -183,7 +180,7 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
   }
 }
 
-void IotKernel::handleUiUploadForm(AsyncWebServerRequest *request){
+void IotKernel::handleUploadForm(AsyncWebServerRequest *request){
   String html = ""
     "<form method='POST' action='/upload' enctype='multipart/form-data'>"
       "<input type='file' name='update'>"
@@ -193,7 +190,7 @@ void IotKernel::handleUiUploadForm(AsyncWebServerRequest *request){
   request->send(200, "text/html", html);
 }
 
-void IotKernel::handleUiUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+void IotKernel::handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
 
 
   if(!index){

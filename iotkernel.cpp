@@ -1,10 +1,10 @@
 #include "iotKernel.h"
 
-IotKernel::IotKernel(String type, String version): web_server(WEB_SERVER_PORT){
+IotKernel::IotKernel(String type, String version): http(WEB_SERVER_PORT){
   // Constructor
   // Note how the web server is instantiated
 
-  
+
 
   this->device_type = type;
   this->device_name = this->device_type + "-" + String(ESP.getChipId(), HEX);
@@ -25,17 +25,16 @@ void IotKernel::init(){
 
   this->spiffs_setup();
   this->get_config_from_spiffs();
-
-  this->wifi_setup();
-  this->MQTT_setup();
   this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
-  this->web_server_setup();
+  this->wifi_setup();
+  this->mqtt_setup();
+  this->http_setup();
 }
 
 void IotKernel::loop(){
   this->wifi_connection_manager();
-  this->MQTT_connection_manager();
-  this->MQTT_client.loop();
+  this->mqtt_connection_manager();
+  this->mqtt.loop();
   this->dns_server.processNextRequest();
   this->handle_reboot();
 }

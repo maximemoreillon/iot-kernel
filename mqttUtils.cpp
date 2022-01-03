@@ -2,7 +2,7 @@
 
 
 
-void IotKernel::MQTT_setup(){
+void IotKernel::mqtt_setup(){
 
   Serial.print("[MQTT] Setup with broker:  ");
   Serial.print(this->config.mqtt.broker.host);
@@ -14,23 +14,23 @@ void IotKernel::MQTT_setup(){
 
   if(this->config.mqtt.broker.secure == "yes") {
     Serial.println("[MQTT] Connecting using SSL");
-    this->MQTT_client.setClient(this->wifi_client_secure);
+    this->mqtt.setClient(this->wifi_client_secure);
   }
   else {
     Serial.println("[MQTT] Connecting without SSL");
-    this->MQTT_client.setClient(this->wifi_client);
+    this->mqtt.setClient(this->wifi_client);
   }
 
   // IPAddress broker_ip;
   // if (broker_ip.fromString(this->config.mqtt.broker.host.c_str())) {
-  //   this->MQTT_client.setServer(broker_ip, this->config.mqtt.broker.port);
+  //   this->mqtt.setServer(broker_ip, this->config.mqtt.broker.port);
   // }
   // else {
-  //   this->MQTT_client.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
+  //   this->mqtt.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
   // }
 
-  this->MQTT_client.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
-  this->MQTT_client.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
+  this->mqtt.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
+  this->mqtt.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
 
   // MQTT topics
   String mqtt_base_topic = "/" + this->config.mqtt.username + "/" + this->device_name;
@@ -41,32 +41,32 @@ void IotKernel::MQTT_setup(){
 
 
 
-void IotKernel::MQTT_connection_manager(){
+void IotKernel::mqtt_connection_manager(){
 
   static boolean last_connection_state = false;
   static long last_connection_attempt;
 
-  if(this->MQTT_client.connected() != last_connection_state) {
-    last_connection_state = this->MQTT_client.connected();
+  if(this->mqtt.connected() != last_connection_state) {
+    last_connection_state = this->mqtt.connected();
 
-    if(this->MQTT_client.connected()){
+    if(this->mqtt.connected()){
       // Changed from disconnected to connected
       Serial.println("[MQTT] Connected");
 
       Serial.println("[MQTT] Subscribing to topic " + this->mqtt_command_topic);
-      this->MQTT_client.subscribe(this->mqtt_command_topic.c_str());
+      this->mqtt.subscribe(this->mqtt_command_topic.c_str());
 
       this->mqtt_publish_state();
     }
     else {
       // Changed from connected to disconnected
       Serial.print("[MQTT] Disconnected: ");
-      Serial.println(this->MQTT_client.state());
+      Serial.println(this->mqtt.state());
     }
   }
 
   // Kind of similar to the pubsubclient example, one connection attempt every 5 seconds
-  if(!this->MQTT_client.connected()){
+  if(!this->mqtt.connected()){
     if(millis() - last_connection_attempt > MQTT_RECONNECT_PERIOD){
       last_connection_attempt = millis();
 
@@ -74,7 +74,7 @@ void IotKernel::MQTT_connection_manager(){
       if(!wifi_connected()) return;
 
       Serial.print("[MQTT] Connecting... (status: ");
-      Serial.print(this->MQTT_client.state());
+      Serial.print(this->mqtt.state());
       Serial.println(")");
 
       // Last will
@@ -89,7 +89,7 @@ void IotKernel::MQTT_connection_manager(){
       serializeJson(outbound_JSON_message, mqtt_last_will, sizeof(mqtt_last_will));
 
 
-      MQTT_client.connect(
+      this->mqtt.connect(
         this->device_name.c_str(),
         this->config.mqtt.username.c_str(),
         this->config.mqtt.password.c_str(),
@@ -164,6 +164,6 @@ void IotKernel::mqtt_publish_state(){
 
   char mqtt_payload[MQTT_MAX_PACKET_SIZE];
   serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));
-  this->MQTT_client.publish(this->mqtt_status_topic.c_str(), mqtt_payload, MQTT_RETAIN);
+  this->mqtt.publish(this->mqtt_status_topic.c_str(), mqtt_payload, MQTT_RETAIN);
 
 }

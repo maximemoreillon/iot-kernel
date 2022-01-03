@@ -38,7 +38,7 @@ void handleMyEndpoint(AsyncWebServerRequest *request) {
 
 void setup() {
   iot_kernel.init();
-  iot_kernel.web_server.on("/my-endpoint", HTTP_GET, handleMyEndpoint);
+  iot_kernel.http.on("/my-endpoint", HTTP_GET, handleMyEndpoint);
 }
 
 void loop() {
@@ -58,7 +58,7 @@ void mqtt_message_callback(char* topic, byte* payload, unsigned int payload_leng
 
 void setup() {
   iot_kernel.init();
-  iot_kernel.MQTT_client.setCallback(mqtt_message_callback);
+  iot_kernel.mqtt.setCallback(mqtt_message_callback);
 }
 
 void loop() {
