@@ -1,8 +1,8 @@
-#include "iotKernel.h"
+#include "IotKernel.h"
 
 class CaptiveRequestHandler : public AsyncWebHandler {
   // Captive portal
-  // Not the best place to have this
+  // Maybe not the ideal place to have this
 
   public:
 
@@ -21,6 +21,7 @@ class CaptiveRequestHandler : public AsyncWebHandler {
 String IotKernel::htmlProcessor(const String& var){
 
   if(var == "IOT_KERNEL_VERSION") return IOT_KERNEL_VERSION;
+
   else if(var == "DEVICE_NAME") return this->device_name;
   else if(var == "DEVICE_TYPE") return this->device_type;
   else if(var == "DEVICE_FIRMWARE_VERSION") return this->firmware_version;
@@ -47,14 +48,16 @@ String IotKernel::htmlProcessor(const String& var){
 
 
 void IotKernel::http_setup(){
-  Serial.println("[Web server] Web server initialization");
+  Serial.println("[HTTP] Web server initialization");
 
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
   // using lamba because otherwise method needs to be static
   this->http.serveStatic("/", LittleFS, "/www")
     .setDefaultFile("index.html")
-    .setTemplateProcessor([this](auto x) { return htmlProcessor(x); });
+    .setTemplateProcessor([this](const String& x) { return htmlProcessor(x); });
+    //.setTemplateProcessor([this](auto x) { return htmlProcessor(x); });
+    //.setTemplateProcessor(htmlProcessor);
 
   this->http.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); });
 
@@ -74,19 +77,10 @@ void IotKernel::http_setup(){
     }
   );
 
-
   this->http.onNotFound([this](AsyncWebServerRequest *request) { handleNotFound(request); });
   this->http.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
   this->http.begin();
 }
-
-
-
-
-void IotKernel::handleNotFound(AsyncWebServerRequest *request){
-  request->send(404, "text/html", "Not found");
-}
-
 
 
 void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
@@ -124,10 +118,7 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
   request->send(200, "text/html", reboot_html);
 
-  // Schedule reboot
   this->delayed_reboot();
-
-
 
 }
 
@@ -141,6 +132,42 @@ void IotKernel::handleFirmwareUpdateForm(AsyncWebServerRequest *request){
   request->send(200, "text/html", html);
 }
 
+#ifdef ESP32
+void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+
+  if (!index){
+    Serial.println("[Update] Firmware update started");
+    //size_t content_len = request->contentLength();
+    // if filename includes spiffs, update the spiffs partition
+    // int cmd = (filename.indexOf("spiffs") > -1) ? U_PART : U_FLASH;
+    //
+    // if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) {
+    //   Update.printError(Serial);
+    // }
+    if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+      Update.printError(Serial);
+    }
+  }
+
+  if (Update.write(data, len) != len) {
+    Update.printError(Serial);
+  }
+
+  if (final) {
+    if (!Update.end(true)){
+      Update.printError(Serial);
+      request->send(500, "text/html", "Firmware update failed");
+    }
+    else {
+      Serial.println("[Update] Update complete");
+      String reboot_html = "Rebooting...<script>setTimeout(() => window.location.replace('/'), 5000)</script>";
+      request->send(200, "text/html", reboot_html);
+      this->delayed_reboot();
+    }
+  }
+
+}
+#else
 void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
 
   if (!index){
@@ -154,6 +181,7 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
     Serial.println();
 
     Update.runAsync(true);
+
     if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
       Update.printError(Serial);
     }
@@ -179,6 +207,8 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
     }
   }
 }
+#endif
+
 
 void IotKernel::handleUploadForm(AsyncWebServerRequest *request){
   String html = ""
@@ -192,9 +222,10 @@ void IotKernel::handleUploadForm(AsyncWebServerRequest *request){
 
 void IotKernel::handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
 
+  // Uploading a file into the /www/ directory, which is served over HTTP by the web server
 
   if(!index){
-    Serial.printf("[UI upload] UploadStart: %s\n", filename.c_str());
+    Serial.printf("[Upload] Start: %s\n", filename.c_str());
     const String path = "/www/" + filename;
     request->_tempFile = LittleFS.open(path, "w");
   }
@@ -203,12 +234,14 @@ void IotKernel::handleUpload(AsyncWebServerRequest *request, String filename, si
     request->_tempFile.write(data,len);
   }
 
-
   if(final){
-    Serial.printf("[UI upload] UploadEnd: %s, %u B\n", filename.c_str(), index+len);
+    Serial.printf("[Upload] End: %s, %u B\n", filename.c_str(), index+len);
     request->_tempFile.close();
     request->redirect("/");
   }
 
+}
 
+void IotKernel::handleNotFound(AsyncWebServerRequest *request){
+  request->send(404, "text/html", "Not found");
 }

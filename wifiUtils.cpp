@@ -1,4 +1,4 @@
-#include "iotKernel.h"
+#include "IotKernel.h"
 
 
 
@@ -43,6 +43,8 @@ String IotKernel::format_wifi_datalist_options(){
 
 void IotKernel::attempt_sta(){
 
+
+
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
@@ -73,7 +75,7 @@ void IotKernel::attempt_sta(){
 
 void IotKernel::wifi_setup() {
 
-  Serial.println("[WiFi] Wifi starting");
+  Serial.println("[WiFi] Wifi setup");
   this->attempt_sta();
 
   if(this->wifi_connected()){

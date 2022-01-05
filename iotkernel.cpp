@@ -1,13 +1,11 @@
-#include "iotKernel.h"
+#include "IotKernel.h"
 
 IotKernel::IotKernel(String type, String version): http(WEB_SERVER_PORT){
   // Constructor
   // Note how the web server is instantiated
 
-
-
   this->device_type = type;
-  this->device_name = this->device_type + "-" + String(ESP.getChipId(), HEX);
+  this->device_name = this->device_type + "-" + get_chip_id();
   this->firmware_version = version;
 
   this->device_state = "off";
@@ -19,16 +17,18 @@ void IotKernel::init(){
     Serial.begin(115200);
   }
 
-  Serial.println("IoT Kernel init");
+  Serial.println("[IoT Kernel] init...");
 
   this->wifi_client_secure.setInsecure();
 
   this->spiffs_setup();
   this->get_config_from_spiffs();
-  this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
   this->wifi_setup();
+  this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
   this->mqtt_setup();
   this->http_setup();
+
+  Serial.println("[IoT Kernel] init complete");
 }
 
 void IotKernel::loop(){
@@ -39,7 +39,21 @@ void IotKernel::loop(){
   this->handle_reboot();
 }
 
+#ifdef ESP32
+String IotKernel::get_chip_id(){
+  uint32_t chipId = 0;
 
+  for(int i=0; i<17; i=i+8) {
+    chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
+  }
+
+  return String(chipId, HEX);
+}
+#else
+String IotKernel::get_chip_id(){
+  return String(ESP.getChipId(), HEX);
+}
+#endif
 
 void IotKernel::delayed_reboot(){
   this->reboot_pending = true;

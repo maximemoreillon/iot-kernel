@@ -1,17 +1,29 @@
 #ifndef IotKernel_h
 #define IotKernel_h
 
-#include <ESP8266WiFi.h> // Main ESP8266 library
 #include <PubSubClient.h> // MQTT
 #include <WiFiClientSecure.h> // Wifi client, used by MQTT
-#include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h> // DNS server to redirect wifi clients to the web server
 #include <ArduinoJson.h> // JSON, used for the formatting of messages sent to the server
-#include <Updater.h>
-//#include <ESP8266mDNS.h>
 #include <LittleFS.h>
 
+// Swelect ESP32 or ESP8266
+#ifdef ESP32
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <Update.h>
+
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <ESPAsyncTCP.h>
+#include <Updater.h>
+#endif
+
+
+
+
+#define IOT_KERNEL_VERSION "0.1.4"
 
 // Wifi
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
@@ -26,8 +38,9 @@
 #define DNS_PORT 53
 #define WEB_SERVER_PORT 80
 
-#define IOT_KERNEL_VERSION "0.1.3"
 
+
+// Custom structure to handle config
 struct WifiConfig {
   String ssid;
   String password;
@@ -70,6 +83,7 @@ class IotKernel {
     // Misc
     void handle_reboot();
     void delayed_reboot();
+    String get_chip_id();
     String get_device_name();
 
     // SPIFFS
@@ -87,8 +101,8 @@ class IotKernel {
     void wifi_connection_manager();
 
     // Web server
-    String htmlProcessor(const String&);
     void http_setup();
+    String htmlProcessor(const String&);
     void handleNotFound(AsyncWebServerRequest*);
     void handleSettingsUpdate(AsyncWebServerRequest*);
     void handleFirmwareUpdateForm(AsyncWebServerRequest*);
@@ -101,17 +115,17 @@ class IotKernel {
     void mqtt_connection_manager();
     void mqtt_message_callback(char*, byte*, unsigned int);
 
-
-
   public:
 
     AsyncWebServer http;
     PubSubClient mqtt;
+
     String device_state;
     String mqtt_status_topic;
     String mqtt_command_topic;
 
     IotKernel(String, String);
+
     void init();
     void loop();
 
