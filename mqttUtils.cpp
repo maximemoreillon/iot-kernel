@@ -4,6 +4,11 @@
 
 void IotKernel::mqtt_setup(){
 
+  if(this->config.mqtt.broker.host == "") {
+    Serial.println("[MQTT] Broker not provided, skipping MQTT config");
+    return;
+  }
+
   Serial.print("[MQTT] Setup with broker:  ");
   Serial.print(this->config.mqtt.broker.host);
   Serial.print(":");
@@ -33,9 +38,9 @@ void IotKernel::mqtt_setup(){
   this->mqtt.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
 
   // MQTT topics
-  String mqtt_base_topic = "/" + this->config.mqtt.username + "/" + this->device_name;
-  this->mqtt_status_topic = mqtt_base_topic + "/status";
-  this->mqtt_command_topic = mqtt_base_topic + "/command";
+  this->mqtt_base_topic = "/" + this->config.mqtt.username + "/" + this->device_name;
+  this->mqtt_status_topic = this->mqtt_base_topic + "/status";
+  this->mqtt_command_topic = this->mqtt_base_topic + "/command";
 }
 
 
@@ -166,4 +171,10 @@ void IotKernel::mqtt_publish_state(){
   serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));
   this->mqtt.publish(this->mqtt_status_topic.c_str(), mqtt_payload, MQTT_RETAIN);
 
+}
+
+void IotKernel::handle_mqtt(){
+  if(this->config.mqtt.broker.host == "") return;
+  this->mqtt_connection_manager();
+  this->mqtt.loop();
 }

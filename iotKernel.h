@@ -23,7 +23,7 @@
 
 
 
-#define IOT_KERNEL_VERSION "0.1.4"
+#define IOT_KERNEL_VERSION "0.1.10"
 
 // Wifi
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
@@ -112,6 +112,7 @@ class IotKernel {
 
     // MQTT
     void mqtt_setup();
+    void handle_mqtt();
     void mqtt_connection_manager();
     void mqtt_message_callback(char*, byte*, unsigned int);
 
@@ -121,6 +122,7 @@ class IotKernel {
     PubSubClient mqtt;
 
     String device_state;
+    String mqtt_base_topic;
     String mqtt_status_topic;
     String mqtt_command_topic;
 

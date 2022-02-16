@@ -25,6 +25,7 @@ void IotKernel::init(){
   this->get_config_from_spiffs();
   this->wifi_setup();
   this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
+
   this->mqtt_setup();
   this->http_setup();
 
@@ -32,11 +33,18 @@ void IotKernel::init(){
 }
 
 void IotKernel::loop(){
-  this->wifi_connection_manager();
-  this->mqtt_connection_manager();
-  this->mqtt.loop();
-  this->dns_server.processNextRequest();
   this->handle_reboot();
+  this->wifi_connection_manager();
+
+  if(WiFi.getMode() == 1) {
+    this->handle_mqtt();
+    
+  }
+
+  else if(WiFi.getMode() == 2) {
+    this->dns_server.processNextRequest();
+  }
+
 }
 
 #ifdef ESP32

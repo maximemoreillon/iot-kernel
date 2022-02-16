@@ -43,12 +43,17 @@ String IotKernel::format_wifi_datalist_options(){
 
 void IotKernel::attempt_sta(){
 
-
-
   WiFi.persistent(false);
+
+  // Hostname not working properly
+  WiFi.setHostname(this->device_name.c_str());
+  WiFi.hostname(this->device_name.c_str());
+
+
+
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
-  WiFi.hostname(this->device_name);
+
 
   this->scan_wifi();
 
