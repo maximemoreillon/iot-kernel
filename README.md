@@ -1,5 +1,5 @@
 # IOT Kernel
-A base library for IoT devices
+A base library for IoT devices.
 
 
 ## Features
@@ -7,7 +7,7 @@ A base library for IoT devices
 * Configuration via web interface
 * Configuration stored in SPIFFS
 * Captive portal
-* MQTT
+* MQTT client
 
 ## Usage examples
 
