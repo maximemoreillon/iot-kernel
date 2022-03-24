@@ -9,6 +9,11 @@ A base library for IoT devices.
 * Captive portal
 * MQTT client
 
+# Dependencies
+
+* [PubSubClient](https://github.com/knolleary/pubsubclient/releases/tag/v2.8)
+* [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
+
 ## Usage examples
 
 ### Basic usage
