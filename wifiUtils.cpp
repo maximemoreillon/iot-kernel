@@ -45,14 +45,14 @@ void IotKernel::attempt_sta(){
 
   WiFi.persistent(false);
 
-  // Hostname not working properly
-  WiFi.setHostname(this->device_name.c_str());
-  WiFi.hostname(this->device_name.c_str());
-
-
+  WiFi.disconnect();
+  
 
   WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
+  
+  // Hostname not working properly
+  WiFi.setHostname(this->device_name.c_str()); // ESP32
+  WiFi.hostname(this->device_name.c_str()); // ESP8266
 
 
   this->scan_wifi();

@@ -23,7 +23,7 @@
 
 
 
-#define IOT_KERNEL_VERSION "0.1.10"
+#define IOT_KERNEL_VERSION "0.1.11"
 
 // Wifi
 #define WIFI_STA_CONNECTION_TIMEOUT 20000

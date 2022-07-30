@@ -14,7 +14,14 @@ A base library for IoT devices.
 * [PubSubClient](https://github.com/knolleary/pubsubclient/releases/tag/v2.8)
 * [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
 
-## Usage examples
+Additionally, using this library involves static files that can be uploaded to ESP boards (LittleFS) using their respective filesystem uploaders
+
+
+## Flashing
+
+1. ESP32 
+
+## Examples
 
 ### Basic usage
 ```
