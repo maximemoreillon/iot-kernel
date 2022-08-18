@@ -62,8 +62,6 @@ void IotKernel::attempt_sta(){
 
   Serial.print("[WiFi] Attempting connection to ");
   Serial.print(wifi_sta_ssid);
-  Serial.print(" with password ");
-  Serial.print(wifi_sta_password);
   Serial.println("");
 
   // Use password or not depending of if provided

@@ -9,7 +9,7 @@ void IotKernel::mqtt_setup(){
     return;
   }
 
-  Serial.print("[MQTT] Setup with broker:  ");
+  Serial.print("[MQTT] Connecting to broker:  ");
   Serial.print(this->config.mqtt.broker.host);
   Serial.print(":");
   Serial.println(this->config.mqtt.broker.port);
