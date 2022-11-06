@@ -23,7 +23,7 @@
 
 
 
-#define IOT_KERNEL_VERSION "0.1.12"
+#define IOT_KERNEL_VERSION "0.1.13"
 
 // Wifi
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
@@ -75,9 +75,6 @@ class IotKernel {
 
     int found_wifi_count;
     boolean reboot_pending;
-    String device_type;
-    String device_name;
-    String firmware_version;
 
 
     // Misc
@@ -125,6 +122,10 @@ class IotKernel {
     String mqtt_base_topic;
     String mqtt_status_topic;
     String mqtt_command_topic;
+
+    String device_type;
+    String device_name;
+    String firmware_version;
 
     IotKernel(String, String);
 
