@@ -6,6 +6,15 @@ boolean IotKernel::wifi_connected(){
   return WiFi.status() == WL_CONNECTED;
 }
 
+String IotKernel::get_hostname(){
+  if(!this->config.hostname.length()) {
+    return this->device_name;
+  }
+  else {
+    return this->config.hostname;
+  }
+}
+
 String IotKernel::get_softap_ssid(){
   return this->device_name;
 }
@@ -49,24 +58,22 @@ void IotKernel::attempt_sta(){
   
 
   WiFi.mode(WIFI_STA);
-  
-  // Hostname not working properly
-  WiFi.setHostname(this->device_name.c_str()); // ESP32
-  WiFi.hostname(this->device_name.c_str()); // ESP8266
 
+  Serial.print("[WiFi] Setting hostname to ");
+  Serial.println(this->get_hostname());
+
+  WiFi.setHostname(this->get_hostname().c_str()); // ESP32
+  WiFi.hostname(this->get_hostname().c_str()); // ESP8266
 
   this->scan_wifi();
 
-  String wifi_sta_ssid = this->config.wifi.ssid;
-  String wifi_sta_password = this->config.wifi.password;
 
   Serial.print("[WiFi] Attempting connection to ");
-  Serial.print(wifi_sta_ssid);
-  Serial.println("");
+  Serial.println(this->config.wifi.ssid);
 
   // Use password or not depending of if provided
-  if(wifi_sta_password == "") WiFi.begin(wifi_sta_ssid.c_str());
-  else WiFi.begin(wifi_sta_ssid.c_str(), wifi_sta_password.c_str());
+  if(!this->config.wifi.password.length()) WiFi.begin(this->config.wifi.ssid.c_str());
+  else WiFi.begin(this->config.wifi.ssid.c_str(), this->config.wifi.password.c_str());
 
   // Attempt connection for a given amount of time
   long now = millis();
@@ -104,7 +111,8 @@ void IotKernel::wifi_setup() {
     WiFi.softAP(this->get_softap_ssid().c_str());
 
     // Debugging
-    Serial.println("[WiFi] Access point initialized");
+    Serial.print("[WiFi] Access point initialized, SSID:");
+    Serial.println(this->get_softap_ssid());
   }
 
 }

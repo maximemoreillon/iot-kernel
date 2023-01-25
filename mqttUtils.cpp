@@ -4,12 +4,12 @@
 
 void IotKernel::mqtt_setup(){
 
-  if(this->config.mqtt.broker.host == "") {
+  if(!this->config.mqtt.broker.host.length()) {
     Serial.println("[MQTT] Broker not provided, skipping MQTT config");
     return;
   }
 
-  Serial.print("[MQTT] Connecting to broker:  ");
+  Serial.print("[MQTT] Connecting to broker: ");
   Serial.print(this->config.mqtt.broker.host);
   Serial.print(":");
   Serial.println(this->config.mqtt.broker.port);

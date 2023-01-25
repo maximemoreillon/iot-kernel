@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
-    <meta charset="utf-8">
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>%DEVICE_NAME%</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <h1>%DEVICE_NAME%</h1>
 
     <form class="" action="/settings" method="post">
-
       <h2>Device</h2>
       <table>
         <tr>
@@ -28,7 +27,19 @@
               type="text"
               name="nickname"
               value="%DEVICE_NICKNAME%"
-              placeholder='Device nickname'>
+              placeholder="Device nickname"
+            />
+          </td>
+        </tr>
+        <tr>
+          <th>Hostname</th>
+          <td>
+            <input
+              type="text"
+              name="hostname"
+              value="%DEVICE_HOSTNAME%"
+              placeholder="Device hostname"
+            />
           </td>
         </tr>
         <tr>
@@ -52,13 +63,13 @@
               list="wifi_list"
               name="wifi_ssid"
               value="%WIFI_SSID%"
-              placeholder='Wifi SSID'>
+              placeholder="Wifi SSID"
+            />
 
             <datalist id="wifi_list">
               <!-- <option value="Chocolate"> -->
               %WIFI_DATALIST_OPTIONS%
             </datalist>
-
           </td>
         </tr>
         <tr>
@@ -68,14 +79,11 @@
               type="password"
               name="wifi_password"
               value="%WIFI_PASSWORD%"
-              placeholder='Wifi password'>
+              placeholder="Wifi password"
+            />
           </td>
         </tr>
       </table>
-
-
-
-
 
       <h2>MQTT</h2>
       <p>Leave MQTT broker host empty to disable MQTT</p>
@@ -87,7 +95,8 @@
               type="text"
               name="mqtt_broker_host"
               value="%MQTT_BROKER_HOST%"
-              placeholder='MQTT broker host'>
+              placeholder="MQTT broker host"
+            />
           </td>
         </tr>
         <tr>
@@ -97,7 +106,8 @@
               type="text"
               name="mqtt_broker_port"
               value="%MQTT_BROKER_PORT%"
-              placeholder='MQTT broker port'>
+              placeholder="MQTT broker port"
+            />
           </td>
         </tr>
         <tr>
@@ -108,7 +118,6 @@
               <option value="no">No</option>
             </select>
           </td>
-
         </tr>
         <tr>
           <th>Username</th>
@@ -117,7 +126,8 @@
               type="text"
               name="mqtt_username"
               value="%MQTT_USERNAME%"
-              placeholder='MQTT username'>
+              placeholder="MQTT username"
+            />
           </td>
         </tr>
         <tr>
@@ -127,7 +137,8 @@
               type="password"
               name="mqtt_password"
               value="%MQTT_PASSWORD%"
-              placeholder='MQTT password'>
+              placeholder="MQTT password"
+            />
           </td>
         </tr>
         <tr>
@@ -148,22 +159,13 @@
       <table>
         <tr>
           <td colspan="2">
-            <input
-              type="submit"
-              name=""
-              value="Save">
+            <input type="submit" name="" value="Save" />
           </td>
         </tr>
       </table>
-
-
     </form>
 
-    <form
-      method='POST'
-      action='/update'
-      enctype='multipart/form-data'>
-
+    <form method="POST" action="/update" enctype="multipart/form-data">
       <h2>Firmware</h2>
       <table>
         <tr>
@@ -175,48 +177,31 @@
           <td>%IOT_KERNEL_VERSION%</td>
         </tr>
         <tr>
-          <th>
-            Firmware update
-          </th>
+          <th>Firmware update</th>
           <td>
-            <input
-              type='file'
-              name='update'
-              accept=".bin">
-            <input
-              type='submit'
-              value='Update'>
+            <input type="file" name="update" accept=".bin" />
+            <input type="submit" value="Update" />
           </td>
         </tr>
       </table>
-
     </form>
 
-    <form
-      method='POST'
-      action='/upload'
-      enctype='multipart/form-data'>
-
+    <form method="POST" action="/upload" enctype="multipart/form-data">
       <h2>File upload</h2>
       <table>
         <tr>
-          <th>
-            File upload
-          </th>
+          <th>File upload</th>
           <td>
-            <input type='file' name='update'>
-            <input type='submit' value='Update'>
+            <input type="file" name="update" />
+            <input type="submit" value="Update" />
           </td>
         </tr>
       </table>
-
     </form>
 
     <script type="text/javascript">
-      const mqtt_secure_select = document.getElementById('mqtt_secure_select')
+      const mqtt_secure_select = document.getElementById("mqtt_secure_select")
       mqtt_secure_select.value = "%MQTT_BROKER_SECURE%"
     </script>
-
-
   </body>
 </html>

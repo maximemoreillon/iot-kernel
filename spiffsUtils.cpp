@@ -41,6 +41,7 @@ void IotKernel::get_config_from_spiffs(){
 
   // export file content to custom config structure
   this->config.nickname = doc["nickname"].as<String>();
+  this->config.hostname = doc["hostname"].as<String>();
   this->config.wifi.ssid = doc["wifi"]["ssid"].as<String>();
   this->config.wifi.password = doc["wifi"]["password"].as<String>();
   this->config.mqtt.broker.host = doc["mqtt"]["broker"]["host"].as<String>();

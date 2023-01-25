@@ -21,20 +21,15 @@
 #endif
 
 
+#define IOT_KERNEL_VERSION "0.1.14"
 
-
-#define IOT_KERNEL_VERSION "0.1.13"
-
-// Wifi
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
 #define WIFI_AP_IP IPAddress(192, 168, 4, 1)
 
-// MQTT
 #define MQTT_RECONNECT_PERIOD 5000
 #define MQTT_QOS 1
 #define MQTT_RETAIN true
 
-// MISC
 #define DNS_PORT 53
 #define WEB_SERVER_PORT 80
 
@@ -60,6 +55,7 @@ struct MqttConfig {
 
 struct DeviceConfig {
   String nickname;
+  String hostname;
   WifiConfig wifi;
   MqttConfig mqtt;
 };
@@ -88,6 +84,7 @@ class IotKernel {
     void get_config_from_spiffs();
 
     // Wifi
+    String get_hostname();
     boolean wifi_connected();
     String get_softap_ssid();
     String get_wifi_mode();

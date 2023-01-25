@@ -26,6 +26,7 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "DEVICE_TYPE") return this->device_type;
   else if(var == "DEVICE_FIRMWARE_VERSION") return this->firmware_version;
   else if(var == "DEVICE_NICKNAME") return this->config.nickname;
+  else if(var == "DEVICE_HOSTNAME") return this->config.hostname;
   else if(var == "DEVICE_STATE") return this->device_state;
 
   else if(var == "MQTT_BROKER_HOST") return this->config.mqtt.broker.host;
@@ -88,6 +89,7 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
   StaticJsonDocument<1024> doc;
 
   doc["nickname"] = request->arg("nickname");
+  doc["hostname"] = request->arg("hostname");
 
   JsonObject wifi  = doc.createNestedObject("wifi");
   wifi["ssid"] = request->arg("wifi_ssid");
@@ -122,6 +124,7 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
 }
 
+// Is this used?
 void IotKernel::handleFirmwareUpdateForm(AsyncWebServerRequest *request){
   String html = ""
     "<form method='POST' action='/update' enctype='multipart/form-data'>"
@@ -209,7 +212,7 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 }
 #endif
 
-
+// Is this used?
 void IotKernel::handleUploadForm(AsyncWebServerRequest *request){
   String html = ""
     "<form method='POST' action='/upload' enctype='multipart/form-data'>"
