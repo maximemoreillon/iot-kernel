@@ -26,13 +26,6 @@ void IotKernel::mqtt_setup(){
     this->mqtt.setClient(this->wifi_client);
   }
 
-  // IPAddress broker_ip;
-  // if (broker_ip.fromString(this->config.mqtt.broker.host.c_str())) {
-  //   this->mqtt.setServer(broker_ip, this->config.mqtt.broker.port);
-  // }
-  // else {
-  //   this->mqtt.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
-  // }
 
   this->mqtt.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
   this->mqtt.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
@@ -96,6 +89,7 @@ void IotKernel::mqtt_connection_manager(){
 
       this->mqtt.connect(
         this->device_name.c_str(),
+        // this->get_hostname().c_str(),
         this->config.mqtt.username.c_str(),
         this->config.mqtt.password.c_str(),
         this->mqtt_status_topic.c_str(),

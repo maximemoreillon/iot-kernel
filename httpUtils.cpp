@@ -26,7 +26,7 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "DEVICE_TYPE") return this->device_type;
   else if(var == "DEVICE_FIRMWARE_VERSION") return this->firmware_version;
   else if(var == "DEVICE_NICKNAME") return this->config.nickname;
-  else if(var == "DEVICE_HOSTNAME") return this->config.hostname;
+  else if(var == "DEVICE_HOSTNAME") return this->get_hostname();
   else if(var == "DEVICE_STATE") return this->device_state;
 
   else if(var == "MQTT_BROKER_HOST") return this->config.mqtt.broker.host;
@@ -34,7 +34,7 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "MQTT_BROKER_SECURE") return this->config.mqtt.broker.secure;
   else if(var == "MQTT_USERNAME") return this->config.mqtt.username;
   else if(var == "MQTT_PASSWORD") return this->config.mqtt.password;
-  else if(var == "MQTT_STATUS") return this->mqtt.connected() ? "connected" : "disconnected";
+  else if(var == "MQTT_STATUS") return String(this->mqtt.state());
   else if(var == "MQTT_STATUS_TOPIC") return this->mqtt_status_topic;
   else if(var == "MQTT_COMMAND_TOPIC") return this->mqtt_command_topic;
 
