@@ -63,6 +63,10 @@ String IotKernel::get_chip_id(){
 }
 #endif
 
+boolean IotKernel::is_unset(String input) {
+  return !input.length() || input == "null";
+}
+
 void IotKernel::delayed_reboot(){
   this->reboot_pending = true;
 }

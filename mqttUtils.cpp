@@ -1,11 +1,16 @@
 #include "IotKernel.h"
 
 
-
 void IotKernel::mqtt_setup(){
 
-  if(!this->config.mqtt.broker.host.length()) {
-    Serial.println("[MQTT] Broker not provided, skipping MQTT config");
+  if(WiFi.getMode() != 1 ) {
+    Serial.println("[MQTT] Wifi not in STA mode, MQTT disabled");
+    return;
+  }
+
+
+  if(this->is_unset(this->config.mqtt.broker.host)) {
+    Serial.println("[MQTT] Broker not provided, MQTT disabled");
     return;
   }
 
@@ -168,7 +173,8 @@ void IotKernel::mqtt_publish_state(){
 }
 
 void IotKernel::handle_mqtt(){
-  if(this->config.mqtt.broker.host == "") return;
+  if(WiFi.getMode() != 1 ) return;
+  if(this->is_unset(this->config.mqtt.broker.host)) return;
   this->mqtt_connection_manager();
   this->mqtt.loop();
 }

@@ -21,7 +21,7 @@
 #endif
 
 
-#define IOT_KERNEL_VERSION "0.1.15"
+#define IOT_KERNEL_VERSION "0.1.16"
 
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
 #define WIFI_AP_IP IPAddress(192, 168, 4, 1)
@@ -78,6 +78,7 @@ class IotKernel {
     void delayed_reboot();
     String get_chip_id();
     String get_device_name();
+    boolean is_unset(String);
 
     // SPIFFS
     void spiffs_setup();

@@ -39,7 +39,7 @@ void IotKernel::get_config_from_spiffs(){
     return;
   }
 
-  // export file content to custom config structure
+  // load file content into custom config structure
   this->config.nickname = doc["nickname"].as<String>();
   this->config.hostname = doc["hostname"].as<String>();
   this->config.wifi.ssid = doc["wifi"]["ssid"].as<String>();
@@ -49,5 +49,7 @@ void IotKernel::get_config_from_spiffs(){
   this->config.mqtt.broker.secure = doc["mqtt"]["broker"]["secure"].as<String>();
   this->config.mqtt.username = doc["mqtt"]["username"].as<String>();
   this->config.mqtt.password = doc["mqtt"]["password"].as<String>();
+
+  // Warning, unset parameters become the string "null"
 
 }

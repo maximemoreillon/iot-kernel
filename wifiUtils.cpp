@@ -7,12 +7,8 @@ boolean IotKernel::wifi_connected(){
 }
 
 String IotKernel::get_hostname(){
-  if(!this->config.hostname.length()) {
-    return this->device_name;
-  }
-  else {
-    return this->config.hostname;
-  }
+  if(this->is_unset(this->config.hostname)) return this->device_name;
+  else return this->config.hostname;
 }
 
 String IotKernel::get_softap_ssid(){
@@ -42,8 +38,7 @@ void IotKernel::scan_wifi(){
 
 String IotKernel::format_wifi_datalist_options(){
   String wifi_datalist_options = "";
-  for (int i = 0; i < found_wifi_count; i++)
-  {
+  for (int i = 0; i < found_wifi_count; i++) {
     wifi_datalist_options = wifi_datalist_options + "<option value=\"" + WiFi.SSID(i) + "\">";
   }
   return wifi_datalist_options;
@@ -53,10 +48,7 @@ String IotKernel::format_wifi_datalist_options(){
 void IotKernel::attempt_sta(){
 
   WiFi.persistent(false);
-
   WiFi.disconnect();
-  
-
   WiFi.mode(WIFI_STA);
 
   Serial.print("[WiFi] Setting hostname to ");
@@ -65,8 +57,8 @@ void IotKernel::attempt_sta(){
   WiFi.setHostname(this->get_hostname().c_str()); // ESP32
   WiFi.hostname(this->get_hostname().c_str()); // ESP8266
 
+  // This takes time so a bit annoying
   this->scan_wifi();
-
 
   Serial.print("[WiFi] Attempting connection to ");
   Serial.println(this->config.wifi.ssid);
@@ -110,8 +102,7 @@ void IotKernel::wifi_setup() {
     WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, IPAddress(255, 255, 255, 0));
     WiFi.softAP(this->get_softap_ssid().c_str());
 
-    // Debugging
-    Serial.print("[WiFi] Access point initialized, SSID:");
+    Serial.print("[WiFi] Access point initialized, SSID: ");
     Serial.println(this->get_softap_ssid());
   }
 
