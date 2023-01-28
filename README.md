@@ -1,29 +1,30 @@
 # IOT Kernel
-A base library for IoT devices.
 
+A base library for IoT devices.
 
 ## Features
 
-* Configuration via web interface
-* Configuration stored in SPIFFS
-* Captive portal
-* MQTT client
+- Configuration via web interface
+- Configuration stored in SPIFFS
+- Captive portal
+- MQTT client
 
 # Dependencies
 
-* [PubSubClient](https://github.com/knolleary/pubsubclient/releases/tag/v2.8)
-* [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
+- [PubSubClient](https://github.com/knolleary/pubsubclient/releases/tag/v2.8)
+- [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
 
 Additionally, using this library involves static files that can be uploaded to ESP boards (LittleFS) using their respective filesystem uploaders
 
-
 ## Flashing
 
-1. ESP32 
+1. Upload the GUI to the board using the LittleFS upload tool
+2. Upload the sketch to the board as usual
 
 ## Examples
 
 ### Basic usage
+
 ```
 #include "iotKernel.h"
 
@@ -39,6 +40,7 @@ void loop() {
 ```
 
 ### Adding web server endpoint
+
 ```
 #include "iotKernel.h"
 
@@ -59,6 +61,7 @@ void loop() {
 ```
 
 ### Custom MQTT callback
+
 ```
 #include "iotKernel.h"
 
