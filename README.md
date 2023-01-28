@@ -4,9 +4,11 @@ A base library for IoT devices.
 
 ## Features
 
+- WiFi
 - Configuration via web interface
 - Configuration stored in SPIFFS
-- Captive portal
+- Generation of own access point if connection to desired wifi impossible
+- Captive portal when in AP mode
 - MQTT client
 
 # Dependencies
