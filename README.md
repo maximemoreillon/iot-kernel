@@ -10,6 +10,7 @@ A base library for IoT devices.
 - Generation of own access point if connection to desired wifi impossible
 - Captive portal when in AP mode
 - MQTT client
+- OTA updates
 
 # Dependencies
 
