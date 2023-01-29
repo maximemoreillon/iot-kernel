@@ -212,7 +212,6 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 }
 #endif
 
-// Is this used?
 void IotKernel::handleUploadForm(AsyncWebServerRequest *request){
   String html = ""
     "<form method='POST' action='/upload' enctype='multipart/form-data'>"
