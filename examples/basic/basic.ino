@@ -1,4 +1,4 @@
-#include "iotKernel.h"
+#include "IotKernel.h"
 
 IotKernel iot_kernel("device","0.0.1");
 
