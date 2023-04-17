@@ -36,7 +36,7 @@ void IotKernel::mqtt_setup(){
   this->mqtt.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
 
   // MQTT topics
-  this->mqtt_base_topic = "/" + this->config.mqtt.username + "/" + this->device_name;
+  this->mqtt_base_topic = this->config.mqtt.username + "/" + this->device_name;
   this->mqtt_status_topic = this->mqtt_base_topic + "/status";
   this->mqtt_command_topic = this->mqtt_base_topic + "/command";
 }
