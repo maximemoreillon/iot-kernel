@@ -39,6 +39,10 @@ void IotKernel::mqtt_setup(){
   this->mqtt_base_topic = this->config.mqtt.username + "/" + this->device_name;
   this->mqtt_status_topic = this->mqtt_base_topic + "/status";
   this->mqtt_command_topic = this->mqtt_base_topic + "/command";
+
+  // Unused yet, but will be in future versions
+  this->mqtt_availability_topic = this->mqtt_base_topic + "/availability";
+  // TODO: maybe an /info or /config topic for version,
 }
 
 
@@ -60,6 +64,7 @@ void IotKernel::mqtt_connection_manager(){
       this->mqtt.subscribe(this->mqtt_command_topic.c_str());
 
       this->mqtt_publish_state();
+      // TODO: use other topics to publish availability and device info
     }
     else {
       // Changed from connected to disconnected
@@ -141,6 +146,7 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
   }
   else {
     Serial.println("[MQTTT] Payload is NOT JSON with state");
+    // TODO: also support Uppercase
     if(strncmp((char*) payload, "on", payload_length) == 0){
       this->device_state = "on";
       this->mqtt_publish_state();
@@ -159,8 +165,11 @@ void IotKernel::mqtt_publish_state(){
 
   StaticJsonDocument<MQTT_MAX_PACKET_SIZE> outbound_JSON_message;
 
-  outbound_JSON_message["connected"] = true;
   outbound_JSON_message["state"] = this->device_state;
+
+  // TODO: this should be in the /availability topic
+  outbound_JSON_message["connected"] = true;
+  // TODO: those could be part of another topic
   outbound_JSON_message["type"] = this->device_type;
   outbound_JSON_message["nickname"] = this->config.nickname;
   outbound_JSON_message["version"] = this->firmware_version;

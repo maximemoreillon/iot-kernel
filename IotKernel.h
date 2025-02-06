@@ -8,7 +8,7 @@
 #include <ArduinoJson.h> // JSON, used for the formatting of messages sent to the server
 #include <LittleFS.h>
 
-// Swelect ESP32 or ESP8266
+// Select ESP32 or ESP8266
 #ifdef ESP32
 #include <WiFi.h>
 #include <AsyncTCP.h>

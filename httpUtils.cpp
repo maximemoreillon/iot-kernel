@@ -53,7 +53,7 @@ void IotKernel::http_setup(){
 
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
-  // using lamba because otherwise method needs to be static
+  // using lambda because otherwise method needs to be static
   this->http.serveStatic("/", LittleFS, "/www")
     .setDefaultFile("index.html")
     .setTemplateProcessor([this](const String& x) { return htmlProcessor(x); });
@@ -62,6 +62,7 @@ void IotKernel::http_setup(){
 
   this->http.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); });
 
+  // TODO: improve use of HTTP verbs
   this->http.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); });
   this->http.on("/update", HTTP_POST,
     [](AsyncWebServerRequest *request) {},
@@ -86,6 +87,8 @@ void IotKernel::http_setup(){
 
 void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
+  Serial.println("[HTTP] received settings update request");
+
   StaticJsonDocument<1024> doc;
 
   doc["nickname"] = request->arg("nickname");
@@ -104,7 +107,7 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
   broker["port"] = request->arg("mqtt_broker_port");
   broker["secure"] = request->arg("mqtt_broker_secure");
 
-  Serial.println(request->arg("mqtt_broker_secure"));
+  Serial.println("[LittleFS] Writing config to config.json");
 
   File configFile = LittleFS.open("/config.json", "w");
   if (!configFile) {
