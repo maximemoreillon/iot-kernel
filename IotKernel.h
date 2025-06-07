@@ -21,7 +21,7 @@
 #endif
 
 
-#define IOT_KERNEL_VERSION "0.2.1"
+#define IOT_KERNEL_VERSION "0.3.0"
 
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
 #define WIFI_AP_IP IPAddress(192, 168, 4, 1)
@@ -117,9 +117,12 @@ class IotKernel {
     PubSubClient mqtt;
 
     String device_state;
+
     String mqtt_base_topic;
-    String mqtt_status_topic;
+    String mqtt_state_topic;
     String mqtt_command_topic;
+    String mqtt_info_topic;
+    String mqtt_availability_topic;
 
     String device_type;
     String device_name;
@@ -131,6 +134,8 @@ class IotKernel {
     void loop();
 
     void mqtt_publish_state();
+    void mqtt_publish_available();
+    void mqtt_publish_info();
 };
 
 #endif
