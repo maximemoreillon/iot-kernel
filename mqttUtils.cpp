@@ -37,12 +37,10 @@ void IotKernel::mqtt_setup(){
 
   // MQTT topics
   this->mqtt_base_topic = this->config.mqtt.username + "/" + this->device_name;
-  this->mqtt_status_topic = this->mqtt_base_topic + "/status";
+  this->mqtt_state_topic = this->mqtt_base_topic + "/state";
   this->mqtt_command_topic = this->mqtt_base_topic + "/command";
-
-  // Unused yet, but will be in future versions
   this->mqtt_availability_topic = this->mqtt_base_topic + "/availability";
-  // TODO: maybe an /info or /config topic for version,
+  this->mqtt_info_topic = this->mqtt_base_topic + "/info";
 }
 
 
@@ -64,7 +62,8 @@ void IotKernel::mqtt_connection_manager(){
       this->mqtt.subscribe(this->mqtt_command_topic.c_str());
 
       this->mqtt_publish_state();
-      // TODO: use other topics to publish availability and device info
+      this->mqtt_publish_available();
+      this->mqtt_publish_info();
     }
     else {
       // Changed from connected to disconnected
@@ -102,10 +101,11 @@ void IotKernel::mqtt_connection_manager(){
         // this->get_hostname().c_str(),
         this->config.mqtt.username.c_str(),
         this->config.mqtt.password.c_str(),
-        this->mqtt_status_topic.c_str(),
+        // Last will
+        this->mqtt_availability_topic.c_str(),
         MQTT_QOS,
         MQTT_RETAIN,
-        mqtt_last_will
+        "offline"
       );
     }
   }
@@ -114,7 +114,7 @@ void IotKernel::mqtt_connection_manager(){
 
 void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int payload_length) {
 
-  Serial.print("[MQTT] message received on ");
+  Serial.print("[MQTT] Message received on ");
   Serial.print(topic);
   Serial.print(", payload: ");
   for (int i = 0; i < payload_length; i++) Serial.print((char)payload[i]);
@@ -129,11 +129,11 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
 
   if(inbound_JSON_message.containsKey("state")){
 
-    Serial.println("[MQTTT] Payload is JSON with state");
-
     // Check what the command is and act accordingly
     const char* command = inbound_JSON_message["state"];
 
+    // TODO: handle this using a separate function
+    // TODO: also support Uppercase
     if( strcmp(command, "on") == 0 ) {
       this->device_state = "on";
       this->mqtt_publish_state();
@@ -145,7 +145,6 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
 
   }
   else {
-    Serial.println("[MQTTT] Payload is NOT JSON with state");
     // TODO: also support Uppercase
     if(strncmp((char*) payload, "on", payload_length) == 0){
       this->device_state = "on";
@@ -161,23 +160,37 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
 }
 
 void IotKernel::mqtt_publish_state(){
+  
+  StaticJsonDocument<MQTT_MAX_PACKET_SIZE> outbound_JSON_message;
+  
+  outbound_JSON_message["state"] = this->device_state;
+  
+  char mqtt_payload[MQTT_MAX_PACKET_SIZE];
+  serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));
+  this->mqtt.publish(this->mqtt_state_topic.c_str(), mqtt_payload, MQTT_RETAIN);
   Serial.println("[MQTT] State published");
 
+}
+
+void IotKernel::mqtt_publish_info(){
+  
   StaticJsonDocument<MQTT_MAX_PACKET_SIZE> outbound_JSON_message;
-
-  outbound_JSON_message["state"] = this->device_state;
-
-  // TODO: this should be in the /availability topic
-  outbound_JSON_message["connected"] = true;
-  // TODO: those could be part of another topic
+  
   outbound_JSON_message["type"] = this->device_type;
   outbound_JSON_message["nickname"] = this->config.nickname;
   outbound_JSON_message["version"] = this->firmware_version;
   outbound_JSON_message["address"] = WiFi.localIP().toString();
-
+  
   char mqtt_payload[MQTT_MAX_PACKET_SIZE];
   serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));
-  this->mqtt.publish(this->mqtt_status_topic.c_str(), mqtt_payload, MQTT_RETAIN);
+  this->mqtt.publish(this->mqtt_info_topic.c_str(), mqtt_payload, MQTT_RETAIN);
+  Serial.println("[MQTT] Info published");
+
+}
+
+void IotKernel::mqtt_publish_available(){
+  this->mqtt.publish(this->mqtt_availability_topic.c_str(), "online", MQTT_RETAIN);
+  Serial.println("[MQTT] Availability published");
 
 }
 
