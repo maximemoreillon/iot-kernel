@@ -35,7 +35,7 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "MQTT_USERNAME") return this->config.mqtt.username;
   else if(var == "MQTT_PASSWORD") return this->config.mqtt.password;
   else if(var == "MQTT_STATUS") return String(this->mqtt.state());
-  else if(var == "mqtt_state_topic") return this->mqtt_state_topic;
+  else if(var == "MQTT_STATE_TOPIC") return this->mqtt_state_topic;
   else if(var == "MQTT_COMMAND_TOPIC") return this->mqtt_command_topic;
 
   else if(var == "WIFI_MODE") return this->get_wifi_mode();
@@ -127,7 +127,6 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
 }
 
-// Is this used?
 void IotKernel::handleFirmwareUpdateForm(AsyncWebServerRequest *request){
   String html = ""
     "<form method='POST' action='/update' enctype='multipart/form-data'>"
@@ -176,7 +175,7 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 #else
 void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
 
-  if (!index){
+  if (index == 0){
 
     Serial.print("[Update] Updating firmware using file ");
     Serial.println(filename);
@@ -188,15 +187,23 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 
     Update.runAsync(true);
 
-    if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+    size_t sketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+
+    if(!Update.begin(sketchSpace)){
       Update.printError(Serial);
-    }
+    } 
   }
 
   if(!Update.hasError()){
-    if(Update.write(data, len) != len){
-      Update.printError(Serial);
+    if(len){
+      if(Update.write(data, len) != len){
+        Update.printError(Serial);
+        Serial.println("Write failed!");
+      }
     }
+  }
+  else {
+    Serial.println("[Update] Update has error");
   }
 
 

@@ -14,7 +14,7 @@ void IotKernel::mqtt_setup(){
     return;
   }
 
-  Serial.print("[MQTT] Connecting to broker: ");
+  Serial.print("[MQTT] Connecting to broker ");
   Serial.print(this->config.mqtt.broker.host);
   Serial.print(":");
   Serial.println(this->config.mqtt.broker.port);
@@ -112,6 +112,7 @@ void IotKernel::mqtt_connection_manager(){
 
 }
 
+
 void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int payload_length) {
 
   Serial.print("[MQTT] Message received on ");
@@ -126,36 +127,29 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
 
   // Copy the message into the JSON object
   deserializeJson(inbound_JSON_message, payload);
-
+  
   if(inbound_JSON_message.containsKey("state")){
-
-    // Check what the command is and act accordingly
-    const char* command = inbound_JSON_message["state"];
-
-    // TODO: handle this using a separate function
-    // TODO: also support Uppercase
-    if( strcmp(command, "on") == 0 ) {
+    char* command = strdup(inbound_JSON_message["state"]);
+    if( strcmp(strlwr(command), "on") == 0 ) {
       this->device_state = "on";
       this->mqtt_publish_state();
     }
-    else if( strcmp(command, "off") == 0 ) {
+    else if( strcmp(strlwr(command), "off") == 0 ) {
       this->device_state = "off";
       this->mqtt_publish_state();
     }
-
+    free(command);
   }
   else {
-    // TODO: also support Uppercase
-    if(strncmp((char*) payload, "on", payload_length) == 0){
+    if( strncmp(strlwr((char*) payload), "on", payload_length) == 0 ) {
       this->device_state = "on";
       this->mqtt_publish_state();
     }
-    else if(strncmp((char*) payload, "off", payload_length) == 0){
+    else if( strncmp(strlwr((char*) payload), "off", payload_length) == 0 ) {
       this->device_state = "off";
       this->mqtt_publish_state();
     }
   }
-
 
 }
 
@@ -168,7 +162,8 @@ void IotKernel::mqtt_publish_state(){
   char mqtt_payload[MQTT_MAX_PACKET_SIZE];
   serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));
   this->mqtt.publish(this->mqtt_state_topic.c_str(), mqtt_payload, MQTT_RETAIN);
-  Serial.println("[MQTT] State published");
+  Serial.print("[MQTT] State published: ");
+  Serial.println(mqtt_payload);
 
 }
 
