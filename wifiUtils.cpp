@@ -27,13 +27,9 @@ String IotKernel::get_wifi_mode(){
 }
 
 void IotKernel::scan_wifi(){
-  Serial.println("[Wifi] Scan start ... ");
-
+  Serial.println("[Wifi] Scan start... ");
   this->found_wifi_count = WiFi.scanNetworks();
-
-  Serial.print("[Wifi] scan result: ");
-  Serial.print(this->found_wifi_count);
-  Serial.println(" network(s) found");
+  Serial.printf("[Wifi] Scan result: %u network(s) found\n", this->found_wifi_count);
 }
 
 String IotKernel::format_wifi_datalist_options(){
@@ -51,8 +47,7 @@ void IotKernel::attempt_sta(){
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);
 
-  Serial.print("[WiFi] Setting hostname to ");
-  Serial.println(this->get_hostname());
+  Serial.printf("[WiFi] Setting hostname to %s\n", this->get_hostname().c_str());
 
   WiFi.setHostname(this->get_hostname().c_str()); // ESP32
   WiFi.hostname(this->get_hostname().c_str()); // ESP8266
@@ -60,8 +55,7 @@ void IotKernel::attempt_sta(){
   // This takes time so a bit annoying
   this->scan_wifi();
 
-  Serial.print("[WiFi] Attempting connection to ");
-  Serial.println(this->config.wifi.ssid);
+  Serial.printf("[WiFi] Attempting connection to %s\n", this->config.wifi.ssid.c_str());
 
   // Use password or not depending of if provided
   if(!this->config.wifi.password.length()) WiFi.begin(this->config.wifi.ssid.c_str());
@@ -81,8 +75,8 @@ void IotKernel::wifi_setup() {
   this->attempt_sta();
 
   if(this->wifi_connected()){
-    Serial.print("[WIFI] Connected, IP: ");
-    Serial.println(WiFi.localIP());
+    // Serial.print("[WIFI] Connected, IP: ");
+    // Serial.println(WiFi.localIP());
   }
 
   else {
@@ -102,8 +96,7 @@ void IotKernel::wifi_setup() {
     WiFi.softAPConfig(WIFI_AP_IP, WIFI_AP_IP, IPAddress(255, 255, 255, 0));
     WiFi.softAP(this->get_softap_ssid().c_str());
 
-    Serial.print("[WiFi] Access point initialized, SSID: ");
-    Serial.println(this->get_softap_ssid());
+    Serial.printf("[WiFi] Access point initialized, SSID: %s\n", this->get_softap_ssid().c_str());
   }
 
 }
@@ -111,6 +104,7 @@ void IotKernel::wifi_setup() {
 void IotKernel::wifi_connection_manager(){
   // Checks for changes in connection status
   // Currently for STA mode
+  // TODO: consider removing as no practical use
 
   static boolean last_connection_state = false;
 
@@ -120,7 +114,9 @@ void IotKernel::wifi_connection_manager(){
 
     if(this->wifi_connected()){
       Serial.print("[WIFI] Connected, IP: ");
-      Serial.println(WiFi.localIP());
+      Serial.print(WiFi.localIP());
+      Serial.print(", RSSI: ");
+      Serial.println(WiFi.RSSI());
     }
     else {
       Serial.println("[WIFI] Disconnected");

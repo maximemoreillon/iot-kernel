@@ -12,6 +12,8 @@ void IotKernel::spiffs_setup() {
 
 void IotKernel::get_config_from_spiffs(){
 
+  Serial.println("[SPIFFS] Loading config from config.json...");
+
   StaticJsonDocument<1024> doc;
 
 
@@ -51,5 +53,7 @@ void IotKernel::get_config_from_spiffs(){
   this->config.mqtt.password = doc["mqtt"]["password"].as<String>();
 
   // Warning, unset parameters become the string "null"
+
+  Serial.println("[SPIFFS] Successfully loaded config from config.json");
 
 }

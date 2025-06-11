@@ -1,50 +1,65 @@
 #include "IotKernel.h"
 
+// Constructor
+// Note how the web server is instantiated
 IotKernel::IotKernel(String type, String version): http(WEB_SERVER_PORT){
-  // Constructor
-  // Note how the web server is instantiated
-
+  
   this->device_type = type;
   this->device_name = this->device_type + "-" + get_chip_id();
   this->firmware_version = version;
 
   this->device_state = "off";
+
+  this->otaInProgress = false;
+  this->lastOtaWriteTime = 0;
 }
 
 void IotKernel::init(){
 
-  if(!Serial){
-    Serial.begin(115200);
-  }
+  if(!Serial) Serial.begin(115200);
 
-  Serial.println("[IoT Kernel] init...");
+  Serial.printf("\n\n[IoT Kernel] v%s initializing...\n",IOT_KERNEL_VERSION);
 
   this->wifi_client_secure.setInsecure();
 
   this->spiffs_setup();
   this->get_config_from_spiffs();
   this->wifi_setup();
-  this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
 
-  this->mqtt_setup();
+  if(WiFi.getMode() == WIFI_MODE_STA) {
+    this->mqtt_setup();
+  }
+
+  else if(WiFi.getMode() == WIFI_MODE_AP) {
+    this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
+  }
+
   this->http_setup();
 
   Serial.println("[IoT Kernel] init complete");
 }
 
 void IotKernel::loop(){
-  this->handle_reboot();
-  this->wifi_connection_manager();
 
-  if(WiFi.getMode() == 1) {
-    this->handle_mqtt();
+  if(this->otaInProgress){
+    if (millis() - this->lastOtaWriteTime > 10000) {
+      Serial.println("[Update] Update timed out, resetting...");
+      ESP.restart();
+    }
+  } else {
     
-  }
-
-  else if(WiFi.getMode() == 2) {
-    this->dns_server.processNextRequest();
-  }
-
+    // Not really important, just used for Serial
+    this->wifi_connection_manager();
+    
+    if(WiFi.getMode() == WIFI_MODE_STA) {
+      this->handle_mqtt();
+    }
+    
+    else if(WiFi.getMode() == WIFI_MODE_AP) {
+      this->dns_server.processNextRequest();
+    }
+  } 
+  
 }
 
 #ifdef ESP32
@@ -67,23 +82,5 @@ boolean IotKernel::is_unset(String input) {
   return !input.length() || input == "null";
 }
 
-void IotKernel::delayed_reboot(){
-  this->reboot_pending = true;
-}
 
-void IotKernel::handle_reboot(){
-  static boolean reboot_request_acknowledged = false;
-  static long reboot_request_time = 0;
 
-  // Save the reboot request time
-  if(reboot_pending != reboot_request_acknowledged && this->reboot_pending){
-    Serial.println("[Reboot] Reboot request acknowledged");
-    reboot_request_acknowledged = true;
-    reboot_request_time = millis();
-  }
-
-  if(reboot_request_acknowledged && millis() - reboot_request_time > 1000){
-    Serial.println("[Reboot] Rebooting now");
-    ESP.restart();
-  }
-}

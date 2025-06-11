@@ -3,23 +3,12 @@
 
 void IotKernel::mqtt_setup(){
 
-  if(WiFi.getMode() != 1 ) {
-    Serial.println("[MQTT] Wifi not in STA mode, MQTT disabled");
-    return;
-  }
-
-
   if(this->is_unset(this->config.mqtt.broker.host)) {
     Serial.println("[MQTT] Broker not provided, MQTT disabled");
     return;
   }
 
-  Serial.print("[MQTT] Connecting to broker ");
-  Serial.print(this->config.mqtt.broker.host);
-  Serial.print(":");
-  Serial.println(this->config.mqtt.broker.port);
-
-
+  Serial.printf("[MQTT] Connecting to broker %s:%u\n",this->config.mqtt.broker.host.c_str(),this->config.mqtt.broker.port);
 
 
   if(this->config.mqtt.broker.secure == "yes") {
@@ -58,7 +47,7 @@ void IotKernel::mqtt_connection_manager(){
       // Changed from disconnected to connected
       Serial.println("[MQTT] Connected");
 
-      Serial.println("[MQTT] Subscribing to topic " + this->mqtt_command_topic);
+      Serial.printf("[MQTT] Subscribing to topic %s\n", this->mqtt_command_topic.c_str());
       this->mqtt.subscribe(this->mqtt_command_topic.c_str());
 
       this->mqtt_publish_state();
@@ -67,8 +56,7 @@ void IotKernel::mqtt_connection_manager(){
     }
     else {
       // Changed from connected to disconnected
-      Serial.print("[MQTT] Disconnected: ");
-      Serial.println(this->mqtt.state());
+      Serial.printf("[MQTT] Disconnected (state: %d)\n", this->mqtt.state());
     }
   }
 
@@ -80,9 +68,8 @@ void IotKernel::mqtt_connection_manager(){
       // No need to do anything if not connected to WiFi
       if(!wifi_connected()) return;
 
-      Serial.print("[MQTT] Connecting... (status: ");
-      Serial.print(this->mqtt.state());
-      Serial.println(")");
+      Serial.printf("[MQTT] Connecting... (state: %d)\n",this->mqtt.state());
+
 
       // Last will
       StaticJsonDocument<MQTT_MAX_PACKET_SIZE> outbound_JSON_message;
@@ -190,7 +177,7 @@ void IotKernel::mqtt_publish_available(){
 }
 
 void IotKernel::handle_mqtt(){
-  if(WiFi.getMode() != 1 ) return;
+  if(WiFi.getMode() != WIFI_MODE_STA ) return;
   if(this->is_unset(this->config.mqtt.broker.host)) return;
   this->mqtt_connection_manager();
   this->mqtt.loop();

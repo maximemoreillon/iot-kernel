@@ -7,6 +7,7 @@
 #include <DNSServer.h> // DNS server to redirect wifi clients to the web server
 #include <ArduinoJson.h> // JSON, used for the formatting of messages sent to the server
 #include <LittleFS.h>
+#include <Ticker.h>
 
 // Select ESP32 or ESP8266
 #ifdef ESP32
@@ -33,6 +34,9 @@
 #define DNS_PORT 53
 #define WEB_SERVER_PORT 80
 
+#define WIFI_MODE_AP 2
+#define WIFI_MODE_STA 1
+
 
 
 // Custom structure to handle config
@@ -43,7 +47,7 @@ struct WifiConfig {
 
 struct MqttBrokerConfig {
   String host;
-  int port;
+  uint port;
   String secure;
 };
 
@@ -67,15 +71,19 @@ class IotKernel {
     WiFiClient wifi_client;
     WiFiClientSecure wifi_client_secure;
     DNSServer dns_server;
+    Ticker rebootTimer;
+
     DeviceConfig config;
 
-    int found_wifi_count;
-    boolean reboot_pending;
+    // OTA safeguards
+    boolean otaInProgress;
+    unsigned long lastOtaWriteTime;
+
+    // TODO: try to get rid of this one
+    uint found_wifi_count;
 
 
     // Misc
-    void handle_reboot();
-    void delayed_reboot();
     String get_chip_id();
     String get_device_name();
     boolean is_unset(String);
@@ -102,6 +110,7 @@ class IotKernel {
     void handleSettingsUpdate(AsyncWebServerRequest*);
     void handleFirmwareUpdateForm(AsyncWebServerRequest*);
     void handleFirmwareUpdate(AsyncWebServerRequest*, const String&, size_t, uint8_t*, size_t, bool);
+    void handleFirmwareUpdateResult(AsyncWebServerRequest*);
     void handleUploadForm(AsyncWebServerRequest*);
     void handleUpload( AsyncWebServerRequest*, String, size_t, uint8_t*, size_t, bool);
 

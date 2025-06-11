@@ -64,14 +64,18 @@ void IotKernel::http_setup(){
 
   // TODO: improve use of HTTP verbs
   this->http.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); });
+
   this->http.on("/update", HTTP_POST,
-    [](AsyncWebServerRequest *request) {},
+    [this](AsyncWebServerRequest *request) {
+      handleFirmwareUpdateResult(request);
+    },
     [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
       handleFirmwareUpdate(request, filename, index, data, len, final);
     }
   );
 
   this->http.on("/upload", HTTP_GET,[this](AsyncWebServerRequest *request) { handleUploadForm(request); });
+
   this->http.on("/upload", HTTP_POST,
     [](AsyncWebServerRequest *request) {},
     [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
@@ -119,11 +123,9 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
   serializeJson(doc, configFile);
   Serial.println("[SPIFFS] Finished writing config file");
 
-  String reboot_html = "Rebooting...<script>setTimeout(() => window.location.replace('/'), 5000)</script>";
+  request->send(200, "text/html", "Rebooting...<script>setTimeout(() => window.location.replace('/'), 5000)</script>");
 
-  request->send(200, "text/html", reboot_html);
-
-  this->delayed_reboot();
+  rebootTimer.once(1, []() { ESP.restart(); });
 
 }
 
@@ -161,13 +163,9 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
   if (final) {
     if (!Update.end(true)){
       Update.printError(Serial);
-      request->send(500, "text/html", "Firmware update failed");
     }
     else {
       Serial.println("[Update] Update complete");
-      String reboot_html = "Rebooting...<script>setTimeout(() => window.location.replace('/'), 5000)</script>";
-      request->send(200, "text/html", reboot_html);
-      this->delayed_reboot();
     }
   }
 
@@ -177,50 +175,56 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 
   if (index == 0){
 
-    Serial.print("[Update] Updating firmware using file ");
-    Serial.println(filename);
-    Serial.print("[Update] Size: ");
-    Serial.print(request->contentLength());
-    Serial.print(", available: ");
-    Serial.print(ESP.getFreeSketchSpace());
-    Serial.println();
+    if(this->otaInProgress == true){
+      Serial.println("[Update] is already in progress");
+      return;
+    } else {
 
-    Update.runAsync(true);
+      Serial.printf("[Update] Updating firmware using file %s\n", filename.c_str());
+      this->otaInProgress = true;
+      Update.runAsync(true);
 
-    size_t sketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-
-    if(!Update.begin(sketchSpace)){
-      Update.printError(Serial);
-    } 
-  }
-
-  if(!Update.hasError()){
-    if(len){
-      if(Update.write(data, len) != len){
+      if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+        Serial.println("[Update] begin failed");
         Update.printError(Serial);
-        Serial.println("Write failed!");
-      }
+      } 
     }
-  }
-  else {
-    Serial.println("[Update] Update has error");
+    
   }
 
+  // Serial.printf("[Update] Writing chunk: index=%u, len=%u\n", index, len);
+
+  if (!Update.hasError()) {
+    if(Update.write(data, len) != len){
+      Serial.println("[Update] Write failed");
+      Update.printError(Serial);
+    }
+    this->lastOtaWriteTime = millis();
+  }
 
   if (final) {
-    if (!Update.end(true)){
-      Update.printError(Serial);
-      request->send(500, "text/html", "Firmware update failed");
+    if (Update.end(true)){
+      Serial.println("[Update] Update Successful");
     }
     else {
-      Serial.println("[Update] Update complete");
-      String reboot_html = "Rebooting...<script>setTimeout(() => window.location.replace('/'), 5000)</script>";
-      request->send(200, "text/html", reboot_html);
-      this->delayed_reboot();
+      Serial.println("[Update] end failed");
+      Update.printError(Serial);
     }
   }
 }
 #endif
+
+void IotKernel::handleFirmwareUpdateResult(AsyncWebServerRequest *request) {
+  this->otaInProgress = false;
+  bool success = !Update.hasError();
+  if (success) {
+    request->send(200, "text/html", "Update successful. Rebooting...<script>setTimeout(() => window.location.replace('/'), 10000)</script>");
+    rebootTimer.once(1, []() { ESP.restart(); });
+  } else {
+    request->send(500, "text/plain", "Update FAILED");
+    Update.printError(Serial);
+  }
+}
 
 void IotKernel::handleUploadForm(AsyncWebServerRequest *request){
   String html = ""
