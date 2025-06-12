@@ -30,13 +30,14 @@ Additionally, using this library involves static files that can be uploaded to E
 
 Those are the endpoints of the Web server.
 
-| Route   | Method | Description                                                           |
-| ------- | ------ | --------------------------------------------------------------------- |
-| /       | GET    | Accesses index.html file in SPIFFS                                    |
-| /update | GET    | Barebone page for OTA firmware updates                                |
-| /update | POST   | Endpoint to upload a new firmware file (.bin), as multipart/form-data |
-| /upload | GET    | Barebone page for the updating the GUI                                |
-| /upload | POST   | Endpoint to upload new GUI files, as multipart/form-data              |
+| Route     | Method | Description                                                           |
+| --------- | ------ | --------------------------------------------------------------------- |
+| /         | GET    | Accesses index.html file in SPIFFS                                    |
+| /update   | GET    | Barebone page for OTA firmware updates                                |
+| /update   | POST   | Endpoint to upload a new firmware file (.bin), as multipart/form-data |
+| /upload   | GET    | Barebone page for the updating the GUI                                |
+| /upload   | POST   | Endpoint to upload new GUI files, as multipart/form-data              |
+| /settings | POST   | Endpoint to update the settings stored in SPIFFS                      |
 
 ## Notes
 
