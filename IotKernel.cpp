@@ -26,11 +26,12 @@ void IotKernel::init(){
   this->get_config_from_spiffs();
   this->wifi_setup();
 
-  if(WiFi.getMode() == WIFI_MODE_STA) {
+  if(WiFi.getMode() == WIFI_STA) {
     this->mqtt_setup();
   }
 
-  else if(WiFi.getMode() == WIFI_MODE_AP) {
+  else if(WiFi.getMode() == WIFI_AP) {
+    Serial.println("[DNS] Starting DNS server");
     this->dns_server.start(DNS_PORT, "*", WIFI_AP_IP);
   }
 
@@ -42,20 +43,19 @@ void IotKernel::init(){
 void IotKernel::loop(){
 
   if(this->otaInProgress){
-    if (millis() - this->lastOtaWriteTime > 10000) {
+    if (millis() - this->lastOtaWriteTime > 5000) {
       Serial.println("[Update] Update timed out, resetting...");
       ESP.restart();
     }
   } else {
     
-    // Not really important, just used for Serial
     this->wifi_connection_manager();
     
-    if(WiFi.getMode() == WIFI_MODE_STA) {
+    if(WiFi.getMode() == WIFI_STA) {
       this->handle_mqtt();
     }
     
-    else if(WiFi.getMode() == WIFI_MODE_AP) {
+    else if(WiFi.getMode() == WIFI_AP) {
       this->dns_server.processNextRequest();
     }
   } 

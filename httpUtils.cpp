@@ -1,22 +1,18 @@
 #include "IotKernel.h"
 
-class CaptiveRequestHandler : public AsyncWebHandler {
-  // Captive portal
-  // Maybe not the ideal place to have this
+const char* captivePortalPage = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IoT Kernel captive portal</title>
+</head>
+<body>
+  <p>Redirecting...</p>
+  <script>setTimeout(() => window.location.replace('/'), 1000)</script>
+</body>
+</html>
+)rawliteral";
 
-  public:
-
-    CaptiveRequestHandler() {}
-    virtual ~CaptiveRequestHandler() {}
-
-    bool canHandle(AsyncWebServerRequest *request){
-      return true;
-    }
-
-    void handleRequest(AsyncWebServerRequest *request) {
-      request->redirect("/");
-    }
-};
 
 String IotKernel::htmlProcessor(const String& var){
 
@@ -61,10 +57,7 @@ void IotKernel::http_setup(){
     //.setTemplateProcessor(htmlProcessor);
 
   this->http.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); });
-
-  // TODO: improve use of HTTP verbs
   this->http.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); });
-
   this->http.on("/update", HTTP_POST,
     [this](AsyncWebServerRequest *request) {
       handleFirmwareUpdateResult(request);
@@ -73,9 +66,7 @@ void IotKernel::http_setup(){
       handleFirmwareUpdate(request, filename, index, data, len, final);
     }
   );
-
   this->http.on("/upload", HTTP_GET,[this](AsyncWebServerRequest *request) { handleUploadForm(request); });
-
   this->http.on("/upload", HTTP_POST,
     [](AsyncWebServerRequest *request) {},
     [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
@@ -83,8 +74,20 @@ void IotKernel::http_setup(){
     }
   );
 
-  this->http.onNotFound([this](AsyncWebServerRequest *request) { handleNotFound(request); });
-  this->http.addHandler(new CaptiveRequestHandler()).setFilter(ON_AP_FILTER);
+  // NOTE: addHandler(new CaptiveRequestHandler()) did not work
+  // NOTE: redirects don't work in iOS
+  this->http.on("/generate_204", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
+  this->http.on("/gen_204", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
+  this->http.on("/hotspot-detect.html", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
+  this->http.on("/connecttest.txt", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
+  this->http.on("/redirect", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
+  this->http.on("/library/test/success.html", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
+
+  this->http.onNotFound([this](AsyncWebServerRequest *request) {
+    Serial.printf("[HTTP] Not found: %s\n", request->url().c_str());
+    handleNotFound(request);
+  });
+  
   this->http.begin();
 }
 

@@ -1,7 +1,6 @@
 #include "IotKernel.h"
 
 
-
 boolean IotKernel::wifi_connected(){
   return WiFi.status() == WL_CONNECTED;
 }
@@ -17,9 +16,9 @@ String IotKernel::get_softap_ssid(){
 
 String IotKernel::get_wifi_mode(){
   switch (WiFi.getMode()) {
-    case 1:
+    case WIFI_STA:
       return "STA";
-    case 2:
+    case WIFI_AP:
       return "AP";
     default:
       return "unknown";

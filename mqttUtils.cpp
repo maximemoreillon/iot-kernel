@@ -177,7 +177,7 @@ void IotKernel::mqtt_publish_available(){
 }
 
 void IotKernel::handle_mqtt(){
-  if(WiFi.getMode() != WIFI_MODE_STA ) return;
+  if(WiFi.getMode() != WIFI_STA ) return;
   if(this->is_unset(this->config.mqtt.broker.host)) return;
   this->mqtt_connection_manager();
   this->mqtt.loop();

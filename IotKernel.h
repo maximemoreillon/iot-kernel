@@ -34,9 +34,6 @@
 #define DNS_PORT 53
 #define WEB_SERVER_PORT 80
 
-#define WIFI_MODE_AP 2
-#define WIFI_MODE_STA 1
-
 
 
 // Custom structure to handle config
