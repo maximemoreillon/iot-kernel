@@ -76,10 +76,6 @@ class IotKernel {
     boolean otaInProgress;
     unsigned long lastOtaWriteTime;
 
-    // TODO: try to get rid of this one
-    uint found_wifi_count;
-
-
     // Misc
     String get_chip_id();
     String get_device_name();
@@ -94,8 +90,6 @@ class IotKernel {
     boolean wifi_connected();
     String get_softap_ssid();
     String get_wifi_mode();
-    void scan_wifi();
-    String format_wifi_datalist_options();
     void attempt_sta();
     void wifi_setup();
     void wifi_connection_manager();

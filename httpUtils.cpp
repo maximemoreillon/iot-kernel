@@ -37,7 +37,6 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "WIFI_MODE") return this->get_wifi_mode();
   else if(var == "WIFI_SSID") return this->config.wifi.ssid;
   else if(var == "WIFI_PASSWORD") return this->config.wifi.password;
-  else if(var == "WIFI_DATALIST_OPTIONS") return this->format_wifi_datalist_options();
 
   return String();
 
@@ -53,8 +52,8 @@ void IotKernel::http_setup(){
   this->http.serveStatic("/", LittleFS, "/www")
     .setDefaultFile("index.html")
     .setTemplateProcessor([this](const String& x) { return htmlProcessor(x); });
-    //.setTemplateProcessor([this](auto x) { return htmlProcessor(x); });
-    //.setTemplateProcessor(htmlProcessor);
+
+  // TODO: add a GET /settings endpoint that returns JSON
 
   this->http.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); });
   this->http.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); });
@@ -75,7 +74,7 @@ void IotKernel::http_setup(){
   );
 
   // NOTE: addHandler(new CaptiveRequestHandler()) did not work
-  // NOTE: redirects don't work in iOS
+  // NOTE: For iOS, redirects annot be used
   this->http.on("/generate_204", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
   this->http.on("/gen_204", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
   this->http.on("/hotspot-detect.html", HTTP_ANY, [](AsyncWebServerRequest *req){ req->send(200, "text/html", captivePortalPage); });
@@ -145,30 +144,36 @@ void IotKernel::handleFirmwareUpdateForm(AsyncWebServerRequest *request){
 #ifdef ESP32
 void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
 
-  if (!index){
-    Serial.println("[Update] Firmware update started");
-    //size_t content_len = request->contentLength();
-    // if filename includes spiffs, update the spiffs partition
-    // int cmd = (filename.indexOf("spiffs") > -1) ? U_PART : U_FLASH;
-    //
-    // if (!Update.begin(UPDATE_SIZE_UNKNOWN, cmd)) {
-    //   Update.printError(Serial);
-    // }
+  if (index == 0){
+
+    if(this->otaInProgress == true){
+      Serial.println("[Update] is already in progress");
+      return;
+    }
+
+    Serial.printf("[Update] Updating firmware using file %s\n", filename.c_str());
+    this->otaInProgress = true;
+
     if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+      Serial.println("[Update] begin failed");
       Update.printError(Serial);
     }
   }
-
-  if (Update.write(data, len) != len) {
-    Update.printError(Serial);
+  if (!Update.hasError()) {
+    if (Update.write(data, len) != len) {
+      Serial.println("[Update] Write failed");
+      Update.printError(Serial);
+    }
+    this->lastOtaWriteTime = millis();
   }
 
   if (final) {
-    if (!Update.end(true)){
-      Update.printError(Serial);
+    if (Update.end(true)){
+      Serial.println("[Update] Update Successful");
     }
     else {
-      Serial.println("[Update] Update complete");
+      Serial.println("[Update] end failed");
+      Update.printError(Serial);
     }
   }
 
@@ -181,27 +186,25 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
     if(this->otaInProgress == true){
       Serial.println("[Update] is already in progress");
       return;
-    } else {
-
-      Serial.printf("[Update] Updating firmware using file %s\n", filename.c_str());
-      this->otaInProgress = true;
-      Update.runAsync(true);
-
-      if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
-        Serial.println("[Update] begin failed");
-        Update.printError(Serial);
-      } 
     }
-    
-  }
 
-  // Serial.printf("[Update] Writing chunk: index=%u, len=%u\n", index, len);
+    Serial.printf("[Update] Updating firmware using file %s\n", filename.c_str());
+    this->otaInProgress = true;
+    Update.runAsync(true);
+
+    if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+      Serial.println("[Update] begin failed");
+      Update.printError(Serial);
+    } 
+
+  }
 
   if (!Update.hasError()) {
     if(Update.write(data, len) != len){
       Serial.println("[Update] Write failed");
       Update.printError(Serial);
     }
+    // TODO: Here might notbe the best place for this
     this->lastOtaWriteTime = millis();
   }
 

@@ -25,20 +25,6 @@ String IotKernel::get_wifi_mode(){
   }
 }
 
-void IotKernel::scan_wifi(){
-  Serial.println("[Wifi] Scan start... ");
-  this->found_wifi_count = WiFi.scanNetworks();
-  Serial.printf("[Wifi] Scan result: %u network(s) found\n", this->found_wifi_count);
-}
-
-String IotKernel::format_wifi_datalist_options(){
-  String wifi_datalist_options = "";
-  for (int i = 0; i < found_wifi_count; i++) {
-    wifi_datalist_options = wifi_datalist_options + "<option value=\"" + WiFi.SSID(i) + "\">";
-  }
-  return wifi_datalist_options;
-}
-
 
 void IotKernel::attempt_sta(){
 
@@ -50,9 +36,6 @@ void IotKernel::attempt_sta(){
 
   WiFi.setHostname(this->get_hostname().c_str()); // ESP32
   WiFi.hostname(this->get_hostname().c_str()); // ESP8266
-
-  // This takes time so a bit annoying
-  this->scan_wifi();
 
   Serial.printf("[WiFi] Attempting connection to %s\n", this->config.wifi.ssid.c_str());
 
