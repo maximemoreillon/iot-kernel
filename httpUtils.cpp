@@ -95,20 +95,20 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
   Serial.println("[HTTP] received settings update request");
 
-  StaticJsonDocument<1024> doc;
+  JsonDocument doc;
 
   doc["nickname"] = request->arg("nickname");
   doc["hostname"] = request->arg("hostname");
 
-  JsonObject wifi  = doc.createNestedObject("wifi");
+  JsonObject wifi  = doc["wifi"].to<JsonObject>();
   wifi["ssid"] = request->arg("wifi_ssid");
   wifi["password"] = request->arg("wifi_password");
 
-  JsonObject mqtt  = doc.createNestedObject("mqtt");
+  JsonObject mqtt  = doc["mqtt"].to<JsonObject>();
   mqtt["username"] = request->arg("mqtt_username");
   mqtt["password"] = request->arg("mqtt_password");
 
-  JsonObject broker  = mqtt.createNestedObject("broker");
+  JsonObject broker  = mqtt["broker"].to<JsonObject>();
   broker["host"] = request->arg("mqtt_broker_host");
   broker["port"] = request->arg("mqtt_broker_port");
   broker["secure"] = request->arg("mqtt_broker_secure");

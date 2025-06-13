@@ -72,7 +72,7 @@ void IotKernel::mqtt_connection_manager(){
 
 
       // Last will
-      StaticJsonDocument<MQTT_MAX_PACKET_SIZE> outbound_JSON_message;
+      JsonDocument outbound_JSON_message;
 
       outbound_JSON_message["connected"] = false;
       outbound_JSON_message["type"] = this->device_type;
@@ -110,7 +110,7 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
 
   // Create a JSON object to hold the message
   // Note: size is limited by MQTT library
-  StaticJsonDocument<MQTT_MAX_PACKET_SIZE> inbound_JSON_message;
+  JsonDocument inbound_JSON_message;
 
   // Copy the message into the JSON object
   deserializeJson(inbound_JSON_message, payload);
@@ -142,7 +142,7 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
 
 void IotKernel::mqtt_publish_state(){
   
-  StaticJsonDocument<MQTT_MAX_PACKET_SIZE> outbound_JSON_message;
+  JsonDocument outbound_JSON_message;
   
   outbound_JSON_message["state"] = this->device_state;
   
@@ -156,7 +156,7 @@ void IotKernel::mqtt_publish_state(){
 
 void IotKernel::mqtt_publish_info(){
   
-  StaticJsonDocument<MQTT_MAX_PACKET_SIZE> outbound_JSON_message;
+  JsonDocument outbound_JSON_message;
   
   outbound_JSON_message["type"] = this->device_type;
   outbound_JSON_message["nickname"] = this->config.nickname;

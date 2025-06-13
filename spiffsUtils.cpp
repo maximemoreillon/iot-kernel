@@ -14,7 +14,7 @@ void IotKernel::get_config_from_spiffs(){
 
   Serial.println("[SPIFFS] Loading config from config.json...");
 
-  StaticJsonDocument<1024> doc;
+  JsonDocument doc;
 
 
   File configFile = LittleFS.open("/config.json", "r");
