@@ -42,9 +42,12 @@ void IotKernel::init(){
 
 void IotKernel::loop(){
 
-  if(this->otaInProgress){
-    if (millis() - this->lastOtaWriteTime > 5000) {
-      Serial.println("[Update] Update timed out, resetting...");
+  if(this->lastOtaWriteTime){
+
+    // Needs to be cast a long somehow
+    long diff = millis() - this->lastOtaWriteTime;
+    if (diff > 10000) {
+      Serial.printf("[Update] Update timed out, resetting...\n");
       ESP.restart();
     }
   } else {

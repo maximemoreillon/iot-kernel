@@ -144,6 +144,7 @@ void IotKernel::handleFirmwareUpdateForm(AsyncWebServerRequest *request){
 #ifdef ESP32
 void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
 
+
   if (index == 0){
 
     if(this->otaInProgress == true){
@@ -151,7 +152,9 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
       return;
     }
 
-    Serial.printf("[Update] Updating firmware using file %s\n", filename.c_str());
+
+    Serial.printf("[Update] Updating ESP322 firmware using file %s\n", filename.c_str());
+    
     this->otaInProgress = true;
 
     if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
@@ -159,6 +162,9 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
       Update.printError(Serial);
     }
   }
+
+  
+  
   if (!Update.hasError()) {
     if (Update.write(data, len) != len) {
       Serial.println("[Update] Write failed");
@@ -181,6 +187,8 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 #else
 void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
 
+  
+
   if (index == 0){
 
     if(this->otaInProgress == true){
@@ -188,7 +196,7 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
       return;
     }
 
-    Serial.printf("[Update] Updating firmware using file %s\n", filename.c_str());
+    Serial.printf("[Update] Updating ESP8266 firmware using file %s\n", filename.c_str());
     this->otaInProgress = true;
     Update.runAsync(true);
 
@@ -204,7 +212,6 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
       Serial.println("[Update] Write failed");
       Update.printError(Serial);
     }
-    // TODO: Here might notbe the best place for this
     this->lastOtaWriteTime = millis();
   }
 

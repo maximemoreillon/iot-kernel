@@ -62,12 +62,8 @@ void IotKernel::wifi_setup() {
   }
 
   else {
-    /*
-     * If the connection to the wifi is not possible,
-     * Create a Wifi access point
-     * Create a web server
-     * Direct clients to the web server upon connection to the Wifi Access point
-     */
+    // If the connection to the wifi is not possible, create a Wifi access point
+
 
     Serial.println("[Wifi] Cannot connect to provided WiFi, starting access point...");
 
