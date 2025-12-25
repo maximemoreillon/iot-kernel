@@ -2,13 +2,13 @@
 
 // Constructor
 // Note how the web server is instantiated
-IotKernel::IotKernel(String type, String version): http(WEB_SERVER_PORT){
+IotKernel::IotKernel(String type, String version, String state): http(WEB_SERVER_PORT){
   
   this->device_type = type;
   this->device_name = this->device_type + "-" + get_chip_id();
   this->firmware_version = version;
 
-  this->device_state = "off";
+  this->device_state = state;
 
   this->otaInProgress = false;
   this->lastOtaWriteTime = 0;
