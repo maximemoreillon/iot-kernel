@@ -113,26 +113,27 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
   JsonDocument inbound_JSON_message;
 
   // Copy the message into the JSON object
-  deserializeJson(inbound_JSON_message, payload);
-  
-  if(inbound_JSON_message.containsKey("state")){
-    char* command = strdup(inbound_JSON_message["state"]);
-    if( strcmp(strlwr(command), "on") == 0 ) {
+  // NOTE: payload is not null-terminated, so the length must be passed
+  DeserializationError error = deserializeJson(inbound_JSON_message, payload, payload_length);
+
+  if(!error && inbound_JSON_message["state"].is<const char*>()){
+    const char* command = inbound_JSON_message["state"];
+    if(strcasecmp(command, "on") == 0) {
       this->device_state = "on";
       this->mqtt_publish_state();
     }
-    else if( strcmp(strlwr(command), "off") == 0 ) {
+    else if(strcasecmp(command, "off") == 0) {
       this->device_state = "off";
       this->mqtt_publish_state();
     }
-    free(command);
   }
   else {
-    if( strncmp(strlwr((char*) payload), "on", payload_length) == 0 ) {
+    // Plain-text payload: require an exact (case-insensitive) match
+    if(payload_length == 2 && strncasecmp((const char*) payload, "on", 2) == 0) {
       this->device_state = "on";
       this->mqtt_publish_state();
     }
-    else if( strncmp(strlwr((char*) payload), "off", payload_length) == 0 ) {
+    else if(payload_length == 3 && strncasecmp((const char*) payload, "off", 3) == 0) {
       this->device_state = "off";
       this->mqtt_publish_state();
     }

@@ -29,13 +29,8 @@ void IotKernel::get_config_from_spiffs(){
     return;
   }
 
-  // Allocate a buffer to store contents of the file.
-  std::unique_ptr<char[]> buf(new char[size]);
-
-  configFile.readBytes(buf.get(), size);
-
-
-  auto error = deserializeJson(doc, buf.get());
+  auto error = deserializeJson(doc, configFile);
+  configFile.close();
   if (error) {
     Serial.println("[SPIFFS] Failed to parse config file");
     return;
