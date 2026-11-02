@@ -29,24 +29,43 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "MQTT_BROKER_PORT") return String(this->config.mqtt.broker.port);
   else if(var == "MQTT_BROKER_SECURE") return this->config.mqtt.broker.secure;
   else if(var == "MQTT_USERNAME") return this->config.mqtt.username;
-  else if(var == "MQTT_PASSWORD") return this->config.mqtt.password;
+  // NOTE: passwords are never sent back to the browser
+  else if(var == "MQTT_PASSWORD") return String();
   else if(var == "MQTT_STATUS") return String(this->mqtt.state());
   else if(var == "MQTT_STATE_TOPIC") return this->mqtt_state_topic;
   else if(var == "MQTT_COMMAND_TOPIC") return this->mqtt_command_topic;
 
   else if(var == "WIFI_MODE") return this->get_wifi_mode();
   else if(var == "WIFI_SSID") return this->config.wifi.ssid;
-  else if(var == "WIFI_PASSWORD") return this->config.wifi.password;
+  else if(var == "WIFI_PASSWORD") return String();
 
   return String();
 
 }
 
+boolean IotKernel::isSameOrigin(AsyncWebServerRequest *request){
+  // Blocks cross-site requests (CSRF): a web page on another origin
+  // submitting a form to the device sends its own Origin header.
+  // Requests without an Origin header (e.g. curl) are allowed.
+  if(!request->hasHeader("Origin")) return true;
+  String origin = request->header("Origin");
+  String host = request->host();
+  if(origin == "http://" + host || origin == "https://" + host) return true;
+  Serial.printf("[HTTP] Rejected cross-origin request from %s\n", origin.c_str());
+  return false;
+}
+
+String IotKernel::sanitizeUploadFilename(const String& filename){
+  // Keep only the file name (drop any path) and reject . and ..
+  int slash = max(filename.lastIndexOf('/'), filename.lastIndexOf('\\'));
+  String name = filename.substring(slash + 1);
+  if(name.length() == 0 || name == "." || name == "..") return String();
+  return name;
+}
+
 
 void IotKernel::http_setup(){
   Serial.println("[HTTP] Web server initialization");
-
-  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 
   // using lambda because otherwise method needs to be static
   this->http.serveStatic("/", LittleFS, "/www")
@@ -95,6 +114,17 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
   Serial.println("[HTTP] received settings update request");
 
+  if(!this->isSameOrigin(request)) {
+    request->send(403, "text/plain", "Forbidden");
+    return;
+  }
+
+  // Passwords are not sent to the browser, so an empty field means "keep the current one"
+  String wifi_password = request->arg("wifi_password");
+  if(!wifi_password.length()) wifi_password = this->config.wifi.password;
+  String mqtt_password = request->arg("mqtt_password");
+  if(!mqtt_password.length()) mqtt_password = this->config.mqtt.password;
+
   JsonDocument doc;
 
   doc["nickname"] = request->arg("nickname");
@@ -102,11 +132,11 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
   JsonObject wifi  = doc["wifi"].to<JsonObject>();
   wifi["ssid"] = request->arg("wifi_ssid");
-  wifi["password"] = request->arg("wifi_password");
+  wifi["password"] = wifi_password;
 
   JsonObject mqtt  = doc["mqtt"].to<JsonObject>();
   mqtt["username"] = request->arg("mqtt_username");
-  mqtt["password"] = request->arg("mqtt_password");
+  mqtt["password"] = mqtt_password;
 
   JsonObject broker  = mqtt["broker"].to<JsonObject>();
   broker["host"] = request->arg("mqtt_broker_host");
@@ -146,6 +176,8 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 
 
   if (index == 0){
+
+    if(!this->isSameOrigin(request)) return;
 
     if(this->otaRequest){
       Serial.println("[Update] is already in progress");
@@ -192,6 +224,8 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 
   if (index == 0){
 
+    if(!this->isSameOrigin(request)) return;
+
     if(this->otaRequest){
       Serial.println("[Update] is already in progress");
       return;
@@ -232,6 +266,10 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 #endif
 
 void IotKernel::handleFirmwareUpdateResult(AsyncWebServerRequest *request) {
+  if (!this->isSameOrigin(request)) {
+    request->send(403, "text/plain", "Forbidden");
+    return;
+  }
   if (request != this->otaRequest) {
     request->send(409, "text/plain", "Update already in progress");
     return;
@@ -264,16 +302,29 @@ void IotKernel::handleUpload(AsyncWebServerRequest *request, String filename, si
   // Uploading a file into the /www/ directory, which is served over HTTP by the web server
 
   if(!index){
-    Serial.printf("[Upload] Start: %s\n", filename.c_str());
-    const String path = "/www/" + filename;
-    request->_tempFile = LittleFS.open(path, "w");
+    String name = this->sanitizeUploadFilename(filename);
+    if(!this->isSameOrigin(request)) {
+      // File is not opened, so the rest of the upload is ignored
+    }
+    else if(!name.length()) {
+      Serial.printf("[Upload] Rejected invalid file name: %s\n", filename.c_str());
+    }
+    else {
+      Serial.printf("[Upload] Start: %s\n", name.c_str());
+      request->_tempFile = LittleFS.open("/www/" + name, "w");
+      if(!request->_tempFile) Serial.println("[Upload] Failed to open file for writing");
+    }
   }
 
-  if(len) {
+  if(len && request->_tempFile) {
     request->_tempFile.write(data,len);
   }
 
   if(final){
+    if(!request->_tempFile) {
+      request->send(400, "text/plain", "Upload rejected");
+      return;
+    }
     Serial.printf("[Upload] End: %s, %u B\n", filename.c_str(), index+len);
     request->_tempFile.close();
     request->redirect("/");

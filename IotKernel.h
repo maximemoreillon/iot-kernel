@@ -98,6 +98,8 @@ class IotKernel {
     // Web server
     void http_setup();
     String htmlProcessor(const String&);
+    boolean isSameOrigin(AsyncWebServerRequest*);
+    String sanitizeUploadFilename(const String&);
     void handleNotFound(AsyncWebServerRequest*);
     void handleSettingsUpdate(AsyncWebServerRequest*);
     void handleFirmwareUpdateForm(AsyncWebServerRequest*);
