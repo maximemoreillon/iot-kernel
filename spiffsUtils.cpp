@@ -37,17 +37,17 @@ void IotKernel::get_config_from_spiffs(){
   }
 
   // load file content into custom config structure
-  this->config.nickname = doc["nickname"].as<String>();
-  this->config.hostname = doc["hostname"].as<String>();
-  this->config.wifi.ssid = doc["wifi"]["ssid"].as<String>();
-  this->config.wifi.password = doc["wifi"]["password"].as<String>();
-  this->config.mqtt.broker.host = doc["mqtt"]["broker"]["host"].as<String>();
+  // Missing keys default to an empty string (not "null")
+  this->config.nickname = doc["nickname"] | "";
+  this->config.hostname = doc["hostname"] | "";
+  this->config.wifi.ssid = doc["wifi"]["ssid"] | "";
+  this->config.wifi.password = doc["wifi"]["password"] | "";
+  this->config.mqtt.broker.host = doc["mqtt"]["broker"]["host"] | "";
+  // NOTE: as<int>() also parses the port when stored as a string by the web form
   this->config.mqtt.broker.port = doc["mqtt"]["broker"]["port"].as<int>();
-  this->config.mqtt.broker.secure = doc["mqtt"]["broker"]["secure"].as<String>();
-  this->config.mqtt.username = doc["mqtt"]["username"].as<String>();
-  this->config.mqtt.password = doc["mqtt"]["password"].as<String>();
-
-  // Warning, unset parameters become the string "null"
+  this->config.mqtt.broker.secure = doc["mqtt"]["broker"]["secure"] | "";
+  this->config.mqtt.username = doc["mqtt"]["username"] | "";
+  this->config.mqtt.password = doc["mqtt"]["password"] | "";
 
   Serial.println("[SPIFFS] Successfully loaded config from config.json");
 

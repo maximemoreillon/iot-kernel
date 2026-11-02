@@ -10,7 +10,7 @@ IotKernel::IotKernel(String type, String version): http(WEB_SERVER_PORT){
 
   // this->device_state = "off";
 
-  this->otaInProgress = false;
+  this->otaRequest = nullptr;
   this->lastOtaWriteTime = 0;
 }
 

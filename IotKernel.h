@@ -75,7 +75,7 @@ class IotKernel {
     // OTA safeguards
     // NOTE: if lastOtaWriteTime is unsigned long, millis() - lastOtaWriteTime will yield large number
     long lastOtaWriteTime;
-    boolean otaInProgress;
+    AsyncWebServerRequest* otaRequest; // request owning the update in progress, or nullptr
 
     // Misc
     String get_chip_id();

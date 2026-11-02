@@ -147,15 +147,15 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 
   if (index == 0){
 
-    if(this->otaInProgress == true){
+    if(this->otaRequest){
       Serial.println("[Update] is already in progress");
       return;
     }
 
 
-    Serial.printf("[Update] Updating ESP322 firmware using file %s\n", filename.c_str());
-    
-    this->otaInProgress = true;
+    Serial.printf("[Update] Updating ESP32 firmware using file %s\n", filename.c_str());
+
+    this->otaRequest = request;
 
     if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
       Serial.println("[Update] begin failed");
@@ -163,8 +163,9 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
     }
   }
 
-  
-  
+  // Ignore chunks from any upload other than the one in progress
+  if (request != this->otaRequest) return;
+
   if (!Update.hasError()) {
     if (Update.write(data, len) != len) {
       Serial.println("[Update] Write failed");
@@ -191,21 +192,24 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 
   if (index == 0){
 
-    if(this->otaInProgress == true){
+    if(this->otaRequest){
       Serial.println("[Update] is already in progress");
       return;
     }
 
     Serial.printf("[Update] Updating ESP8266 firmware using file %s\n", filename.c_str());
-    this->otaInProgress = true;
+    this->otaRequest = request;
     Update.runAsync(true);
 
     if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
       Serial.println("[Update] begin failed");
       Update.printError(Serial);
-    } 
+    }
 
   }
+
+  // Ignore chunks from any upload other than the one in progress
+  if (request != this->otaRequest) return;
 
   if (!Update.hasError()) {
     if(Update.write(data, len) != len){
@@ -228,12 +232,18 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 #endif
 
 void IotKernel::handleFirmwareUpdateResult(AsyncWebServerRequest *request) {
-  this->otaInProgress = false;
+  if (request != this->otaRequest) {
+    request->send(409, "text/plain", "Update already in progress");
+    return;
+  }
+  this->otaRequest = nullptr;
   bool success = !Update.hasError();
   if (success) {
     request->send(200, "text/html", "Update successful. Rebooting...<script>setTimeout(() => window.location.replace('/'), 10000)</script>");
     rebootTimer.once(1, []() { ESP.restart(); });
   } else {
+    // Stop the OTA timeout so loop() resumes normal operation
+    this->lastOtaWriteTime = 0;
     request->send(500, "text/plain", "Update FAILED");
     Update.printError(Serial);
   }
