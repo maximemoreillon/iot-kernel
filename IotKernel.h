@@ -22,7 +22,7 @@
 #endif
 
 
-#define IOT_KERNEL_VERSION "0.3.3"
+#define IOT_KERNEL_VERSION "0.3.4"
 
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
 #define WIFI_AP_IP IPAddress(192, 168, 4, 1)
