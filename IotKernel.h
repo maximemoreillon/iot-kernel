@@ -129,9 +129,9 @@ class IotKernel {
     String device_name;
     String firmware_version;
 
-    IotKernel(String type, String version, String state = "off");
+    IotKernel(String type, String version);
 
-    void init();
+    void init(String state = "off");
     void loop();
 
     void mqtt_publish_state();
