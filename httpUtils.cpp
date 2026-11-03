@@ -198,12 +198,12 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
   File configFile = LittleFS.open("/config.json", "w");
   if (!configFile) {
     Serial.println("[LittleFS] Failed to open config file for writing");
-    request->send(500, "text/html", "Failed to acess SPIFFS");
+    request->send(500, "text/plain", "Failed to write the configuration");
     return;
   }
 
   serializeJson(doc, configFile);
-  Serial.println("[SPIFFS] Finished writing config file");
+  Serial.println("[LittleFS] Finished writing config file");
 
   request->send(200, "text/html", "Rebooting...<script>setTimeout(() => window.location.replace('/'), 5000)</script>");
 
@@ -316,6 +316,11 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 #endif
 
 void IotKernel::handleFirmwareUpdateResult(AsyncWebServerRequest *request) {
+  if (!this->otaRequest) {
+    // e.g. the form was submitted without choosing a file
+    request->send(400, "text/plain", "No firmware received");
+    return;
+  }
   if (request != this->otaRequest) {
     request->send(409, "text/plain", "Update already in progress");
     return;

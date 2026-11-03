@@ -31,6 +31,7 @@
 #define WIFI_AP_IP IPAddress(192, 168, 4, 1)
 
 #define MQTT_RECONNECT_PERIOD 5000
+#define MQTT_DEFAULT_PORT 1883
 #define MQTT_QOS 1
 #define MQTT_RETAIN true
 
@@ -100,13 +101,12 @@ class IotKernel {
 
     // Misc
     String get_chip_id();
-    String get_device_name();
     boolean is_unset(String);
     boolean has_admin_password();
 
-    // SPIFFS
-    void spiffs_setup();
-    void get_config_from_spiffs();
+    // LittleFS
+    void littlefs_setup();
+    void load_config();
 
     // Wifi
     String get_hostname();
@@ -138,16 +138,20 @@ class IotKernel {
     void handleUpload( AsyncWebServerRequest*, String, size_t, uint8_t*, size_t, bool);
 
     // MQTT
+    void mqtt_set_topics();
     void mqtt_setup();
     void handle_mqtt();
     void mqtt_connection_manager();
+    void mqttPublishAvailable();
+    void mqttPublishInfo();
 
   public:
 
     AsyncWebServer http;
     PubSubClient mqtt;
 
-    // Topic naming conventions: the device subscribes and publishes to them only if the sketch does so
+    // Topic naming conventions, set by init() from the configuration
+    // NOTE: the device subscribes and publishes to the state and command topics only if the sketch does so
     String mqttBaseTopic;
     String mqttStateTopic;
     String mqttCommandTopic;
@@ -162,9 +166,6 @@ class IotKernel {
 
     void init();
     void loop();
-
-    void mqttPublishAvailable();
-    void mqttPublishInfo();
 
     // Called when the connection to the configured WiFi is established or lost
     void onWifiConnect(std::function<void()> callback);

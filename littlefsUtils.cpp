@@ -1,38 +1,38 @@
 #include "IotKernel.h"
 
-void IotKernel::spiffs_setup() {
+void IotKernel::littlefs_setup() {
 
   if (!LittleFS.begin()) {
-    Serial.println("[SPIFFS] Failed to mount file system");
+    Serial.println("[LittleFS] Failed to mount file system");
   }
   else {
-    Serial.println("[SPIFFS] File system mounted");
+    Serial.println("[LittleFS] File system mounted");
   }
 }
 
-void IotKernel::get_config_from_spiffs(){
+void IotKernel::load_config(){
 
-  Serial.println("[SPIFFS] Loading config from config.json...");
+  Serial.println("[LittleFS] Loading config from config.json...");
 
   JsonDocument doc;
 
 
   File configFile = LittleFS.open("/config.json", "r");
   if (!configFile) {
-    Serial.println("[SPIFFS] Failed to open config file");
+    Serial.println("[LittleFS] Failed to open config file");
     return;
   }
 
   size_t size = configFile.size();
   if (size > 1024) {
-    Serial.println("[SPIFFS] Config file size is too large");
+    Serial.println("[LittleFS] Config file size is too large");
     return;
   }
 
   auto error = deserializeJson(doc, configFile);
   configFile.close();
   if (error) {
-    Serial.println("[SPIFFS] Failed to parse config file");
+    Serial.println("[LittleFS] Failed to parse config file");
     return;
   }
 
@@ -45,11 +45,13 @@ void IotKernel::get_config_from_spiffs(){
   this->config.wifi.password = doc["wifi"]["password"] | "";
   this->config.mqtt.broker.host = doc["mqtt"]["broker"]["host"] | "";
   // NOTE: as<int>() also parses the port when stored as a string by the web form
+  // and returns 0 when the port is missing or empty
   this->config.mqtt.broker.port = doc["mqtt"]["broker"]["port"].as<int>();
+  if(!this->config.mqtt.broker.port) this->config.mqtt.broker.port = MQTT_DEFAULT_PORT;
   this->config.mqtt.broker.secure = doc["mqtt"]["broker"]["secure"] | "";
   this->config.mqtt.username = doc["mqtt"]["username"] | "";
   this->config.mqtt.password = doc["mqtt"]["password"] | "";
 
-  Serial.println("[SPIFFS] Successfully loaded config from config.json");
+  Serial.println("[LittleFS] Successfully loaded config from config.json");
 
 }

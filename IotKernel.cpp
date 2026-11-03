@@ -35,8 +35,9 @@ void IotKernel::init(){
 
   this->wifi_client_secure.setInsecure();
 
-  this->spiffs_setup();
-  this->get_config_from_spiffs();
+  this->littlefs_setup();
+  this->load_config();
+  this->mqtt_set_topics();
   this->wifi_setup();
 
   if(WiFi.getMode() == WIFI_STA) {

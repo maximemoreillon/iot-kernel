@@ -1,34 +1,30 @@
 #include "IotKernel.h"
 
 
+void IotKernel::mqtt_set_topics(){
+  // Topics only depend on the configuration, so they are available even without a connection
+  this->mqttBaseTopic = this->config.mqtt.username + "/" + this->deviceName;
+  this->mqttStateTopic = this->mqttBaseTopic + "/state";
+  this->mqttCommandTopic = this->mqttBaseTopic + "/command";
+  this->mqttAvailabilityTopic = this->mqttBaseTopic + "/availability";
+  this->mqttInfoTopic = this->mqttBaseTopic + "/info";
+}
+
 void IotKernel::mqtt_setup(){
+  // Configures the client; the connection itself is made by mqtt_connection_manager()
 
   if(this->is_unset(this->config.mqtt.broker.host)) {
     Serial.println("[MQTT] Broker not provided, MQTT disabled");
     return;
   }
 
-  Serial.printf("[MQTT] Connecting to broker %s:%u\n",this->config.mqtt.broker.host.c_str(),this->config.mqtt.broker.port);
+  boolean secure = this->config.mqtt.broker.secure == "yes";
+  Serial.printf("[MQTT] Broker: %s:%u (%s)\n", this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port, secure ? "SSL" : "no SSL");
 
-
-  if(this->config.mqtt.broker.secure == "yes") {
-    Serial.println("[MQTT] Connecting using SSL");
-    this->mqtt.setClient(this->wifi_client_secure);
-  }
-  else {
-    Serial.println("[MQTT] Connecting without SSL");
-    this->mqtt.setClient(this->wifi_client);
-  }
-
+  if(secure) this->mqtt.setClient(this->wifi_client_secure);
+  else this->mqtt.setClient(this->wifi_client);
 
   this->mqtt.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
-
-  // MQTT topics
-  this->mqttBaseTopic = this->config.mqtt.username + "/" + this->deviceName;
-  this->mqttStateTopic = this->mqttBaseTopic + "/state";
-  this->mqttCommandTopic = this->mqttBaseTopic + "/command";
-  this->mqttAvailabilityTopic = this->mqttBaseTopic + "/availability";
-  this->mqttInfoTopic = this->mqttBaseTopic + "/info";
 }
 
 

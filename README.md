@@ -47,7 +47,7 @@ void loop() {
 
 On connection, the device publishes `online` (retained) on `<username>/<device name>/availability`, with `offline` as its last will, and its type, nickname, firmware version and IP address on `<username>/<device name>/info`. It does not publish or subscribe to anything else on its own.
 
-The sketch publishes and subscribes using `iot_kernel.mqtt` (a [PubSubClient](https://pubsubclient.knolleary.net/api)). `mqttBaseTopic`, `mqttStateTopic` and `mqttCommandTopic` provide conventional topic names.
+The sketch publishes and subscribes using `iot_kernel.mqtt` (a [PubSubClient](https://pubsubclient.knolleary.net/api)). `mqttBaseTopic`, `mqttStateTopic` and `mqttCommandTopic` provide conventional topic names, available after `init()`.
 
 Subscriptions are lost when the connection drops, so they must be made in `onMqttConnect`, which runs on every connection:
 
@@ -127,11 +127,11 @@ The device no longer has a built-in state:
   | `mqtt_command_topic`      | `mqttCommandTopic`      |
   | `mqtt_info_topic`         | `mqttInfoTopic`         |
   | `mqtt_availability_topic` | `mqttAvailabilityTopic` |
-  | `mqtt_publish_available()`| `mqttPublishAvailable()`|
-  | `mqtt_publish_info()`     | `mqttPublishInfo()`     |
   | `device_type`             | `deviceType`            |
   | `device_name`             | `deviceName`            |
   | `firmware_version`        | `firmwareVersion`       |
 
+- `mqtt_publish_available()` and `mqtt_publish_info()` were removed: availability and info are published automatically on every connection.
+- When `mqtt.broker.port` is missing from the configuration, port 1883 is used.
 - ESPAsyncWebServer 3.x (ESP32Async) is required.
 - Re-upload the GUI.
