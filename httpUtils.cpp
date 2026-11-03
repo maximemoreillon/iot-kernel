@@ -359,7 +359,7 @@ void IotKernel::handleFirmwareUpdateResult(AsyncWebServerRequest *request) {
 void IotKernel::handleUploadForm(AsyncWebServerRequest *request){
   String html = ""
     "<form method='POST' action='/upload' enctype='multipart/form-data'>"
-      "<input type='file' name='update'>"
+      "<input type='file' name='file'>"
       "<input type='submit' value='Upload'>"
     "</form>";
 
