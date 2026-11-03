@@ -23,7 +23,7 @@
 #endif
 
 
-#define IOT_KERNEL_VERSION "0.3.5"
+#define IOT_KERNEL_VERSION "0.4.0"
 
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
 #define WIFI_AP_STA_RETRY_PERIOD 300000 // While in AP mode, retry the configured WiFi every 5 minutes
