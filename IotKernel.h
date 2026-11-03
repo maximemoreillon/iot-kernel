@@ -23,7 +23,7 @@
 #endif
 
 
-#define IOT_KERNEL_VERSION "0.4.0"
+#define IOT_KERNEL_VERSION "1.0.0"
 
 #define CONFIG_MAX_SIZE 2048
 
