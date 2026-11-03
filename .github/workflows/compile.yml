@@ -8,7 +8,8 @@ on:
 
 jobs:
   compile:
-    runs-on: ubuntu-latest
+    # NOTE: arduino/compile-sketches installs a Python version not available on Ubuntu 26.04 (ubuntu-latest)
+    runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
