@@ -25,6 +25,8 @@
 
 #define IOT_KERNEL_VERSION "0.4.0"
 
+#define CONFIG_MAX_SIZE 2048
+
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
 #define WIFI_AP_STA_RETRY_PERIOD 300000 // While in AP mode, retry the configured WiFi every 5 minutes
 #define WIFI_AP_MIN_PASSWORD_LENGTH 8 // WPA2 requirement
@@ -113,6 +115,7 @@ class IotKernel {
     boolean wifi_connected();
     String get_softap_ssid();
     String get_wifi_mode();
+    void wifi_set_hostname();
     void wifi_begin();
     void attempt_sta();
     void start_ap();
@@ -124,6 +127,7 @@ class IotKernel {
     void http_setup();
     String htmlProcessor(const String&);
     String htmlEscape(const String&);
+    String get_mqtt_status();
     boolean isSameOrigin(AsyncWebServerRequest*);
     boolean isAuthorized(AsyncWebServerRequest*);
     String updatedPassword(AsyncWebServerRequest*, const char*, const char*, const String&);

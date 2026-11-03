@@ -30,7 +30,7 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "MQTT_USERNAME") return this->config.mqtt.username;
   // NOTE: passwords are never sent back to the browser
   else if(var == "MQTT_PASSWORD") return String();
-  else if(var == "MQTT_STATUS") return String(this->mqtt.state());
+  else if(var == "MQTT_STATUS") return this->get_mqtt_status();
   else if(var == "MQTT_BASE_TOPIC") return this->mqttBaseTopic;
 
   else if(var == "WIFI_MODE") return this->get_wifi_mode();
@@ -41,6 +41,24 @@ String IotKernel::htmlProcessor(const String& var){
 
   return String();
 
+}
+
+String IotKernel::get_mqtt_status(){
+  if(this->is_unset(this->config.mqtt.broker.host)) return "disabled (no broker)";
+  if(WiFi.getMode() != WIFI_STA) return "not connected (access point mode)";
+  switch(this->mqtt.state()) {
+    case MQTT_CONNECTED: return "connected";
+    case MQTT_CONNECTION_TIMEOUT: return "connection timed out";
+    case MQTT_CONNECTION_LOST: return "connection lost";
+    case MQTT_CONNECT_FAILED: return "connection failed (broker unreachable)";
+    case MQTT_DISCONNECTED: return "disconnected";
+    case MQTT_CONNECT_BAD_PROTOCOL: return "rejected: bad protocol";
+    case MQTT_CONNECT_BAD_CLIENT_ID: return "rejected: bad client ID";
+    case MQTT_CONNECT_UNAVAILABLE: return "rejected: broker unavailable";
+    case MQTT_CONNECT_BAD_CREDENTIALS: return "rejected: bad username or password";
+    case MQTT_CONNECT_UNAUTHORIZED: return "rejected: not authorized";
+    default: return String(this->mqtt.state());
+  }
 }
 
 String IotKernel::htmlEscape(const String& input){

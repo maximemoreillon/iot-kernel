@@ -32,19 +32,29 @@ String IotKernel::get_wifi_mode(){
       return "STA";
     case WIFI_AP:
       return "AP";
+    case WIFI_AP_STA:
+      return "AP+STA (retrying the configured WiFi)";
     default:
       return "unknown";
   }
 }
 
 
+void IotKernel::wifi_set_hostname(){
+  // NOTE: must be called before the station is enabled: ESP32 applies the hostname
+  // when WiFi.mode() / WiFi.enableSTA() turns the station on, and ignores it afterwards
+  String hostname = this->get_hostname();
+  if(WiFi.setHostname(hostname.c_str())) {
+    Serial.printf("[WiFi] Hostname: %s\n", hostname.c_str());
+  }
+  else {
+    // ESP8266 rejects hostnames that are not made of letters, digits and -, or longer than 32 characters
+    Serial.printf("[WiFi] Invalid hostname \"%s\" (letters, digits and - only, up to 32 characters), keeping the default\n", hostname.c_str());
+  }
+}
+
 void IotKernel::wifi_begin(){
   // Starts connecting to the configured WiFi without waiting
-
-  Serial.printf("[WiFi] Setting hostname to %s\n", this->get_hostname().c_str());
-
-  WiFi.setHostname(this->get_hostname().c_str()); // ESP32
-  WiFi.hostname(this->get_hostname().c_str()); // ESP8266
 
   // NOTE: only the length of the password is printed, to help spot a mistyped or autofilled password
   Serial.printf("[WiFi] Attempting connection to \"%s\" (password: %u characters)\n", this->config.wifi.ssid.c_str(), this->config.wifi.password.length());
@@ -58,6 +68,7 @@ void IotKernel::attempt_sta(){
 
   WiFi.persistent(false);
   WiFi.disconnect();
+  this->wifi_set_hostname();
   WiFi.mode(WIFI_STA);
 
   this->wifi_begin();
@@ -151,6 +162,7 @@ void IotKernel::wifi_ap_retry_manager(){
   }
 
   Serial.println("[WiFi] Retrying the configured WiFi");
+  this->wifi_set_hostname();
   WiFi.enableSTA(true); // AP+STA
   this->wifi_begin();
   this->wifi_sta_retry_start = millis();

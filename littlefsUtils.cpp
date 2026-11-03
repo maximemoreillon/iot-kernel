@@ -24,7 +24,7 @@ void IotKernel::load_config(){
   }
 
   size_t size = configFile.size();
-  if (size > 1024) {
+  if (size > CONFIG_MAX_SIZE) {
     Serial.println("[LittleFS] Config file size is too large");
     return;
   }

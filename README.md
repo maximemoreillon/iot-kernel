@@ -110,6 +110,8 @@ Providing an empty string as MQTT broker disables MQTT functions.
 
 Leading and trailing spaces are removed from the text fields of the settings page (nickname, hostname, SSID, broker, username), but not from passwords.
 
+The hostname may only contain letters, digits and `-`, up to 32 characters. It defaults to the device name.
+
 If the configured WiFi cannot be reached at boot, the device starts an access point and retries the configured WiFi every 5 minutes while no client is connected to the access point.
 
 ## Migrating from 0.4 and earlier
