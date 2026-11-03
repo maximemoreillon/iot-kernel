@@ -77,7 +77,10 @@ class IotKernel {
 
     DeviceConfig config;
 
-    std::function<void(const String&)> state_change_callback;
+    // Applied to every route of the web server, including the ones added by sketches
+    AsyncAuthenticationMiddleware auth_middleware;
+    AsyncMiddlewareFunction same_origin_middleware;
+
     std::function<void()> wifi_connect_callback;
     std::function<void()> wifi_disconnect_callback;
     std::function<void()> mqtt_connect_callback;
@@ -123,7 +126,6 @@ class IotKernel {
     String htmlEscape(const String&);
     boolean isSameOrigin(AsyncWebServerRequest*);
     boolean isAuthorized(AsyncWebServerRequest*);
-    void requireAuthentication(AsyncWebHandler&);
     String updatedPassword(AsyncWebServerRequest*, const char*, const char*, const String&);
     String sanitizeUploadFilename(const String&);
     void handleNotFound(AsyncWebServerRequest*);
@@ -136,18 +138,15 @@ class IotKernel {
 
     // MQTT
     void mqtt_setup();
-    void set_state_from_command(const char*);
     void handle_mqtt();
     void mqtt_connection_manager();
-    void mqtt_message_callback(char*, byte*, unsigned int);
 
   public:
 
     AsyncWebServer http;
     PubSubClient mqtt;
 
-    String device_state;
-
+    // Topic naming conventions: the device subscribes and publishes to them only if the sketch does so
     String mqtt_base_topic;
     String mqtt_state_topic;
     String mqtt_command_topic;
@@ -160,22 +159,19 @@ class IotKernel {
 
     IotKernel(String type, String version);
 
-    void init(String state = "off");
+    void init();
     void loop();
 
-    void mqtt_publish_state();
     void mqtt_publish_available();
     void mqtt_publish_info();
-
-    // Called when the state is changed by an MQTT command
-    void onStateChange(std::function<void(const String&)> callback);
 
     // Called when the connection to the configured WiFi is established or lost
     void onWifiConnect(std::function<void()> callback);
     void onWifiDisconnect(std::function<void()> callback);
 
     // Called when the connection to the MQTT broker is established or lost
-    // NOTE: onMqttConnect is called after subscribing and publishing state, availability and info
+    // NOTE: subscriptions are lost on disconnect, so subscribe in onMqttConnect
+    // NOTE: onMqttConnect is called after publishing availability and info
     void onMqttConnect(std::function<void()> callback);
     void onMqttDisconnect(std::function<void()> callback);
 };

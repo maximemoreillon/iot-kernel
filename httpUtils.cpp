@@ -23,7 +23,6 @@ String IotKernel::htmlProcessor(const String& var){
   else if(var == "DEVICE_FIRMWARE_VERSION") return this->firmware_version;
   else if(var == "DEVICE_NICKNAME") return this->config.nickname;
   else if(var == "DEVICE_HOSTNAME") return this->get_hostname();
-  else if(var == "DEVICE_STATE") return this->device_state;
 
   else if(var == "MQTT_BROKER_HOST") return this->config.mqtt.broker.host;
   else if(var == "MQTT_BROKER_PORT") return String(this->config.mqtt.broker.port);
@@ -32,8 +31,7 @@ String IotKernel::htmlProcessor(const String& var){
   // NOTE: passwords are never sent back to the browser
   else if(var == "MQTT_PASSWORD") return String();
   else if(var == "MQTT_STATUS") return String(this->mqtt.state());
-  else if(var == "MQTT_STATE_TOPIC") return this->mqtt_state_topic;
-  else if(var == "MQTT_COMMAND_TOPIC") return this->mqtt_command_topic;
+  else if(var == "MQTT_BASE_TOPIC") return this->mqtt_base_topic;
 
   else if(var == "WIFI_MODE") return this->get_wifi_mode();
   else if(var == "WIFI_SSID") return this->config.wifi.ssid;
@@ -76,16 +74,12 @@ boolean IotKernel::isSameOrigin(AsyncWebServerRequest *request){
 }
 
 boolean IotKernel::isAuthorized(AsyncWebServerRequest *request){
-  // Used in upload handlers: the web server only checks authentication once the
-  // whole body has been received, i.e. after the upload has been processed
+  // Used in upload handlers: middlewares only run once the whole body has been received,
+  // i.e. after the upload has been processed, so uploads must be checked on their first chunk
   if(!this->has_admin_password()) return true;
-  if(request->authenticate(WEB_SERVER_ADMIN_USERNAME, this->config.admin_password.c_str())) return true;
+  if(this->auth_middleware.allowed(request)) return true;
   Serial.println("[HTTP] Rejected unauthenticated upload");
   return false;
-}
-
-void IotKernel::requireAuthentication(AsyncWebHandler& handler){
-  if(this->has_admin_password()) handler.setAuthentication(WEB_SERVER_ADMIN_USERNAME, this->config.admin_password.c_str());
 }
 
 String IotKernel::updatedPassword(AsyncWebServerRequest *request, const char* field, const char* clearField, const String& current){
@@ -108,46 +102,42 @@ String IotKernel::sanitizeUploadFilename(const String& filename){
 void IotKernel::http_setup(){
   Serial.println("[HTTP] Web server initialization");
 
-  if(this->has_admin_password()) Serial.println("[HTTP] Web server protected by the admin password");
+  // Middlewares apply to every route, including the ones added by sketches with iot_kernel.http.on()
+  this->http.addMiddleware(&this->same_origin_middleware);
+
+  if(this->has_admin_password()) {
+    this->auth_middleware.setUsername(WEB_SERVER_ADMIN_USERNAME);
+    this->auth_middleware.setPassword(this->config.admin_password.c_str());
+    this->auth_middleware.setAuthType(AsyncAuthType::AUTH_DIGEST);
+    this->auth_middleware.generateHash();
+    this->http.addMiddleware(&this->auth_middleware);
+    Serial.println("[HTTP] Web server protected by the admin password");
+  }
 
   // using lambda because otherwise method needs to be static
   // NOTE: values are HTML-escaped so that e.g. a " in the nickname does not break the form
   // NOTE: no-store because the ETag only depends on the file, not on the template values:
   // with caching, the browser would get "304 Not Modified" and show outdated values
-  this->requireAuthentication(
-    this->http.serveStatic("/", LittleFS, "/www", "no-store")
-      .setDefaultFile("index.html")
-      .setTemplateProcessor([this](const String& x) { return htmlEscape(htmlProcessor(x)); })
-  );
+  this->http.serveStatic("/", LittleFS, "/www", "no-store")
+    .setDefaultFile("index.html")
+    .setTemplateProcessor([this](const String& x) { return htmlEscape(htmlProcessor(x)); });
 
-  // TODO: add a GET /settings endpoint that returns JSON
-
-  this->requireAuthentication(
-    this->http.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); })
+  this->http.on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) { handleSettingsUpdate(request); });
+  this->http.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); });
+  this->http.on("/update", HTTP_POST,
+    [this](AsyncWebServerRequest *request) {
+      handleFirmwareUpdateResult(request);
+    },
+    [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+      handleFirmwareUpdate(request, filename, index, data, len, final);
+    }
   );
-  this->requireAuthentication(
-    this->http.on("/update", HTTP_GET,[this](AsyncWebServerRequest *request) { handleFirmwareUpdateForm(request); })
-  );
-  this->requireAuthentication(
-    this->http.on("/update", HTTP_POST,
-      [this](AsyncWebServerRequest *request) {
-        handleFirmwareUpdateResult(request);
-      },
-      [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
-        handleFirmwareUpdate(request, filename, index, data, len, final);
-      }
-    )
-  );
-  this->requireAuthentication(
-    this->http.on("/upload", HTTP_GET,[this](AsyncWebServerRequest *request) { handleUploadForm(request); })
-  );
-  this->requireAuthentication(
-    this->http.on("/upload", HTTP_POST,
-      [](AsyncWebServerRequest *request) {},
-      [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
-        handleUpload(request, filename, index, data, len, final);
-      }
-    )
+  this->http.on("/upload", HTTP_GET,[this](AsyncWebServerRequest *request) { handleUploadForm(request); });
+  this->http.on("/upload", HTTP_POST,
+    [](AsyncWebServerRequest*) {},
+    [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+      handleUpload(request, filename, index, data, len, final);
+    }
   );
 
   // NOTE: addHandler(new CaptiveRequestHandler()) did not work
@@ -171,11 +161,6 @@ void IotKernel::http_setup(){
 void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
   Serial.println("[HTTP] received settings update request");
-
-  if(!this->isSameOrigin(request)) {
-    request->send(403, "text/plain", "Forbidden");
-    return;
-  }
 
   String wifi_password = this->updatedPassword(request, "wifi_password", "wifi_password_clear", this->config.wifi.password);
   String mqtt_password = this->updatedPassword(request, "mqtt_password", "mqtt_password_clear", this->config.mqtt.password);
@@ -323,10 +308,6 @@ void IotKernel::handleFirmwareUpdate(AsyncWebServerRequest *request, const Strin
 #endif
 
 void IotKernel::handleFirmwareUpdateResult(AsyncWebServerRequest *request) {
-  if (!this->isSameOrigin(request)) {
-    request->send(403, "text/plain", "Forbidden");
-    return;
-  }
   if (request != this->otaRequest) {
     request->send(409, "text/plain", "Update already in progress");
     return;

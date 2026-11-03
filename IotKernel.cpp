@@ -2,13 +2,20 @@
 
 // Constructor
 // Note how the web server is instantiated
-IotKernel::IotKernel(String type, String version): http(WEB_SERVER_PORT){
+IotKernel::IotKernel(String type, String version):
+  same_origin_middleware([this](AsyncWebServerRequest *request, ArMiddlewareNext next) {
+    // Blocks cross-site requests (CSRF) on every route that changes something
+    if(request->method() != HTTP_GET && request->method() != HTTP_HEAD && !this->isSameOrigin(request)) {
+      request->send(403, "text/plain", "Forbidden");
+      return;
+    }
+    next();
+  }),
+  http(WEB_SERVER_PORT){
   
   this->device_type = type;
   this->device_name = this->device_type + "-" + get_chip_id();
   this->firmware_version = version;
-
-  // this->device_state = "off";
 
   this->otaRequest = nullptr;
   this->lastOtaWriteTime = 0;
@@ -20,19 +27,13 @@ IotKernel::IotKernel(String type, String version): http(WEB_SERVER_PORT){
   this->wifi_sta_retry_start = 0;
 }
 
-void IotKernel::init(String state){
-
-  this->device_state = state;
+void IotKernel::init(){
 
   if(!Serial) Serial.begin(115200);
 
   Serial.printf("\n\n[IoT Kernel] v%s initializing...\n",IOT_KERNEL_VERSION);
 
   this->wifi_client_secure.setInsecure();
-
-  // Set once here rather than in mqtt_setup(), which can run again later (WiFi recovery from AP mode):
-  // sketches that replace it with iot_kernel.mqtt.setCallback() after init() must keep their callback
-  this->mqtt.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
 
   this->spiffs_setup();
   this->get_config_from_spiffs();
@@ -101,10 +102,6 @@ boolean IotKernel::is_unset(String input) {
 
 boolean IotKernel::has_admin_password() {
   return !this->is_unset(this->config.admin_password);
-}
-
-void IotKernel::onStateChange(std::function<void(const String&)> callback) {
-  this->state_change_callback = callback;
 }
 
 void IotKernel::onWifiConnect(std::function<void()> callback) {

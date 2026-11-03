@@ -43,10 +43,6 @@ void IotKernel::mqtt_connection_manager(){
       // Changed from disconnected to connected
       Serial.println("[MQTT] Connected");
 
-      Serial.printf("[MQTT] Subscribing to topic %s\n", this->mqtt_command_topic.c_str());
-      this->mqtt.subscribe(this->mqtt_command_topic.c_str());
-
-      this->mqtt_publish_state();
       this->mqtt_publish_available();
       this->mqtt_publish_info();
 
@@ -86,65 +82,6 @@ void IotKernel::mqtt_connection_manager(){
 
 }
 
-
-void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int payload_length) {
-
-  Serial.print("[MQTT] Message received on ");
-  Serial.print(topic);
-  Serial.print(", payload: ");
-  for (int i = 0; i < payload_length; i++) Serial.print((char)payload[i]);
-  Serial.println("");
-
-  // Create a JSON object to hold the message
-  // Note: size is limited by MQTT library
-  JsonDocument inbound_JSON_message;
-
-  // Copy the message into the JSON object
-  // NOTE: payload is not null-terminated, so the length must be passed
-  DeserializationError error = deserializeJson(inbound_JSON_message, payload, payload_length);
-
-  if(!error && inbound_JSON_message["state"].is<const char*>()){
-    this->set_state_from_command(inbound_JSON_message["state"].as<const char*>());
-  }
-  else {
-    // Plain-text payload: require an exact (case-insensitive) match
-    char command[4] = "";
-    if(payload_length < sizeof(command) && !memchr(payload, '\0', payload_length)) {
-      memcpy(command, payload, payload_length);
-      command[payload_length] = '\0';
-    }
-    this->set_state_from_command(command);
-  }
-
-}
-
-void IotKernel::set_state_from_command(const char* command) {
-
-  String new_state;
-  if(strcasecmp(command, "on") == 0) new_state = "on";
-  else if(strcasecmp(command, "off") == 0) new_state = "off";
-  else return;
-
-  boolean changed = new_state != this->device_state;
-  this->device_state = new_state;
-  this->mqtt_publish_state();
-
-  if(changed && this->state_change_callback) this->state_change_callback(this->device_state);
-}
-
-void IotKernel::mqtt_publish_state(){
-  
-  JsonDocument outbound_JSON_message;
-  
-  outbound_JSON_message["state"] = this->device_state;
-  
-  char mqtt_payload[MQTT_MAX_PACKET_SIZE];
-  serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));
-  this->mqtt.publish(this->mqtt_state_topic.c_str(), mqtt_payload, MQTT_RETAIN);
-  Serial.print("[MQTT] State published: ");
-  Serial.println(mqtt_payload);
-
-}
 
 void IotKernel::mqtt_publish_info(){
   
