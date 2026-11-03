@@ -127,6 +127,7 @@ class IotKernel {
     boolean isSameOrigin(AsyncWebServerRequest*);
     boolean isAuthorized(AsyncWebServerRequest*);
     String updatedPassword(AsyncWebServerRequest*, const char*, const char*, const String&);
+    String trimmedArg(AsyncWebServerRequest*, const char*);
     String sanitizeUploadFilename(const String&);
     void handleNotFound(AsyncWebServerRequest*);
     void handleSettingsUpdate(AsyncWebServerRequest*);
@@ -147,23 +148,23 @@ class IotKernel {
     PubSubClient mqtt;
 
     // Topic naming conventions: the device subscribes and publishes to them only if the sketch does so
-    String mqtt_base_topic;
-    String mqtt_state_topic;
-    String mqtt_command_topic;
-    String mqtt_info_topic;
-    String mqtt_availability_topic;
+    String mqttBaseTopic;
+    String mqttStateTopic;
+    String mqttCommandTopic;
+    String mqttInfoTopic;
+    String mqttAvailabilityTopic;
 
-    String device_type;
-    String device_name;
-    String firmware_version;
+    String deviceType;
+    String deviceName;
+    String firmwareVersion;
 
     IotKernel(String type, String version);
 
     void init();
     void loop();
 
-    void mqtt_publish_available();
-    void mqtt_publish_info();
+    void mqttPublishAvailable();
+    void mqttPublishInfo();
 
     // Called when the connection to the configured WiFi is established or lost
     void onWifiConnect(std::function<void()> callback);

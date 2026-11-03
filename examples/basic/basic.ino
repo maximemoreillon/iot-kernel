@@ -15,7 +15,7 @@ void setup() {
   // Subscriptions are lost on disconnect, so subscribe on every connection
   iot_kernel.onMqttConnect([]() {
     Serial.println("MQTT connected");
-    iot_kernel.mqtt.subscribe(iot_kernel.mqtt_command_topic.c_str());
+    iot_kernel.mqtt.subscribe(iot_kernel.mqttCommandTopic.c_str());
   });
 
   // Connection events

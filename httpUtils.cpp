@@ -18,9 +18,9 @@ String IotKernel::htmlProcessor(const String& var){
 
   if(var == "IOT_KERNEL_VERSION") return IOT_KERNEL_VERSION;
 
-  else if(var == "DEVICE_NAME") return this->device_name;
-  else if(var == "DEVICE_TYPE") return this->device_type;
-  else if(var == "DEVICE_FIRMWARE_VERSION") return this->firmware_version;
+  else if(var == "DEVICE_NAME") return this->deviceName;
+  else if(var == "DEVICE_TYPE") return this->deviceType;
+  else if(var == "DEVICE_FIRMWARE_VERSION") return this->firmwareVersion;
   else if(var == "DEVICE_NICKNAME") return this->config.nickname;
   else if(var == "DEVICE_HOSTNAME") return this->get_hostname();
 
@@ -31,7 +31,7 @@ String IotKernel::htmlProcessor(const String& var){
   // NOTE: passwords are never sent back to the browser
   else if(var == "MQTT_PASSWORD") return String();
   else if(var == "MQTT_STATUS") return String(this->mqtt.state());
-  else if(var == "MQTT_BASE_TOPIC") return this->mqtt_base_topic;
+  else if(var == "MQTT_BASE_TOPIC") return this->mqttBaseTopic;
 
   else if(var == "WIFI_MODE") return this->get_wifi_mode();
   else if(var == "WIFI_SSID") return this->config.wifi.ssid;
@@ -88,6 +88,14 @@ String IotKernel::updatedPassword(AsyncWebServerRequest *request, const char* fi
   String password = request->arg(field);
   if(!password.length()) return current;
   return password;
+}
+
+String IotKernel::trimmedArg(AsyncWebServerRequest *request, const char* field){
+  // Leading and trailing spaces are almost always typos (e.g. in the SSID)
+  // NOTE: not used for passwords, in which spaces are valid
+  String value = request->arg(field);
+  value.trim();
+  return value;
 }
 
 String IotKernel::sanitizeUploadFilename(const String& filename){
@@ -168,22 +176,22 @@ void IotKernel::handleSettingsUpdate(AsyncWebServerRequest *request) {
 
   JsonDocument doc;
 
-  doc["nickname"] = request->arg("nickname");
-  doc["hostname"] = request->arg("hostname");
+  doc["nickname"] = this->trimmedArg(request, "nickname");
+  doc["hostname"] = this->trimmedArg(request, "hostname");
   doc["admin_password"] = admin_password;
 
   JsonObject wifi  = doc["wifi"].to<JsonObject>();
-  wifi["ssid"] = request->arg("wifi_ssid");
+  wifi["ssid"] = this->trimmedArg(request, "wifi_ssid");
   wifi["password"] = wifi_password;
 
   JsonObject mqtt  = doc["mqtt"].to<JsonObject>();
-  mqtt["username"] = request->arg("mqtt_username");
+  mqtt["username"] = this->trimmedArg(request, "mqtt_username");
   mqtt["password"] = mqtt_password;
 
   JsonObject broker  = mqtt["broker"].to<JsonObject>();
-  broker["host"] = request->arg("mqtt_broker_host");
-  broker["port"] = request->arg("mqtt_broker_port");
-  broker["secure"] = request->arg("mqtt_broker_secure");
+  broker["host"] = this->trimmedArg(request, "mqtt_broker_host");
+  broker["port"] = this->trimmedArg(request, "mqtt_broker_port");
+  broker["secure"] = this->trimmedArg(request, "mqtt_broker_secure");
 
   Serial.println("[LittleFS] Writing config to config.json");
 

@@ -24,11 +24,11 @@ void IotKernel::mqtt_setup(){
   this->mqtt.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
 
   // MQTT topics
-  this->mqtt_base_topic = this->config.mqtt.username + "/" + this->device_name;
-  this->mqtt_state_topic = this->mqtt_base_topic + "/state";
-  this->mqtt_command_topic = this->mqtt_base_topic + "/command";
-  this->mqtt_availability_topic = this->mqtt_base_topic + "/availability";
-  this->mqtt_info_topic = this->mqtt_base_topic + "/info";
+  this->mqttBaseTopic = this->config.mqtt.username + "/" + this->deviceName;
+  this->mqttStateTopic = this->mqttBaseTopic + "/state";
+  this->mqttCommandTopic = this->mqttBaseTopic + "/command";
+  this->mqttAvailabilityTopic = this->mqttBaseTopic + "/availability";
+  this->mqttInfoTopic = this->mqttBaseTopic + "/info";
 }
 
 
@@ -43,8 +43,8 @@ void IotKernel::mqtt_connection_manager(){
       // Changed from disconnected to connected
       Serial.println("[MQTT] Connected");
 
-      this->mqtt_publish_available();
-      this->mqtt_publish_info();
+      this->mqttPublishAvailable();
+      this->mqttPublishInfo();
 
       if(this->mqtt_connect_callback) this->mqtt_connect_callback();
     }
@@ -67,12 +67,12 @@ void IotKernel::mqtt_connection_manager(){
 
       // The last will marks the device as offline on the availability topic
       this->mqtt.connect(
-        this->device_name.c_str(),
+        this->deviceName.c_str(),
         // this->get_hostname().c_str(),
         this->config.mqtt.username.c_str(),
         this->config.mqtt.password.c_str(),
         // Last will
-        this->mqtt_availability_topic.c_str(),
+        this->mqttAvailabilityTopic.c_str(),
         MQTT_QOS,
         MQTT_RETAIN,
         "offline"
@@ -83,24 +83,24 @@ void IotKernel::mqtt_connection_manager(){
 }
 
 
-void IotKernel::mqtt_publish_info(){
+void IotKernel::mqttPublishInfo(){
   
   JsonDocument outbound_JSON_message;
   
-  outbound_JSON_message["type"] = this->device_type;
+  outbound_JSON_message["type"] = this->deviceType;
   outbound_JSON_message["nickname"] = this->config.nickname;
-  outbound_JSON_message["version"] = this->firmware_version;
+  outbound_JSON_message["version"] = this->firmwareVersion;
   outbound_JSON_message["address"] = WiFi.localIP().toString();
   
   char mqtt_payload[MQTT_MAX_PACKET_SIZE];
   serializeJson(outbound_JSON_message, mqtt_payload, sizeof(mqtt_payload));
-  this->mqtt.publish(this->mqtt_info_topic.c_str(), mqtt_payload, MQTT_RETAIN);
+  this->mqtt.publish(this->mqttInfoTopic.c_str(), mqtt_payload, MQTT_RETAIN);
   Serial.println("[MQTT] Info published");
 
 }
 
-void IotKernel::mqtt_publish_available(){
-  this->mqtt.publish(this->mqtt_availability_topic.c_str(), "online", MQTT_RETAIN);
+void IotKernel::mqttPublishAvailable(){
+  this->mqtt.publish(this->mqttAvailabilityTopic.c_str(), "online", MQTT_RETAIN);
   Serial.println("[MQTT] Availability published");
 
 }

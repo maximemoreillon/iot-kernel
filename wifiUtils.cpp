@@ -1,17 +1,29 @@
 #include "IotKernel.h"
 
+static const char* wifi_status_description(wl_status_t status){
+  switch(status) {
+    case WL_NO_SSID_AVAIL: return "network not found";
+    case WL_CONNECT_FAILED: return "connection failed";
+#ifdef ESP8266
+    case WL_WRONG_PASSWORD: return "wrong password";
+#endif
+    case WL_DISCONNECTED: return "timed out";
+    default: return "unknown reason";
+  }
+}
+
 
 boolean IotKernel::wifi_connected(){
   return WiFi.status() == WL_CONNECTED;
 }
 
 String IotKernel::get_hostname(){
-  if(this->is_unset(this->config.hostname)) return this->device_name;
+  if(this->is_unset(this->config.hostname)) return this->deviceName;
   else return this->config.hostname;
 }
 
 String IotKernel::get_softap_ssid(){
-  return this->device_name;
+  return this->deviceName;
 }
 
 String IotKernel::get_wifi_mode(){
@@ -34,7 +46,8 @@ void IotKernel::wifi_begin(){
   WiFi.setHostname(this->get_hostname().c_str()); // ESP32
   WiFi.hostname(this->get_hostname().c_str()); // ESP8266
 
-  Serial.printf("[WiFi] Attempting connection to %s\n", this->config.wifi.ssid.c_str());
+  // NOTE: only the length of the password is printed, to help spot a mistyped or autofilled password
+  Serial.printf("[WiFi] Attempting connection to \"%s\" (password: %u characters)\n", this->config.wifi.ssid.c_str(), this->config.wifi.password.length());
 
   // Use password or not depending of if provided
   if(!this->config.wifi.password.length()) WiFi.begin(this->config.wifi.ssid.c_str());
@@ -95,7 +108,8 @@ void IotKernel::wifi_setup() {
 
   if(!this->wifi_connected()){
     // If the connection to the wifi is not possible, create a Wifi access point
-    Serial.println("[Wifi] Cannot connect to provided WiFi, starting access point...");
+    wl_status_t status = WiFi.status();
+    Serial.printf("[WiFi] Cannot connect to provided WiFi (status %d: %s), starting access point...\n", status, wifi_status_description(status));
     this->start_ap();
   }
 
@@ -116,7 +130,8 @@ void IotKernel::wifi_ap_retry_manager(){
       this->mqtt_setup();
     }
     else if(millis() - this->wifi_sta_retry_start > WIFI_STA_CONNECTION_TIMEOUT) {
-      Serial.println("[WiFi] Still cannot connect to the configured WiFi");
+      wl_status_t status = WiFi.status();
+      Serial.printf("[WiFi] Still cannot connect to the configured WiFi (status %d: %s)\n", status, wifi_status_description(status));
       this->wifi_sta_retry_start = 0;
       WiFi.disconnect();
       WiFi.enableSTA(false); // Back to AP only

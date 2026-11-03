@@ -13,9 +13,9 @@ IotKernel::IotKernel(String type, String version):
   }),
   http(WEB_SERVER_PORT){
   
-  this->device_type = type;
-  this->device_name = this->device_type + "-" + get_chip_id();
-  this->firmware_version = version;
+  this->deviceType = type;
+  this->deviceName = this->deviceType + "-" + get_chip_id();
+  this->firmwareVersion = version;
 
   this->otaRequest = nullptr;
   this->lastOtaWriteTime = 0;
