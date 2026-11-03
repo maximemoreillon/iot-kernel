@@ -45,7 +45,7 @@ void loop() {
 
 ### MQTT
 
-On connection, the device publishes `online` (retained) on `<username>/<device name>/availability`, with `offline` as its last will, and its type, nickname, firmware version and IP address on `<username>/<device name>/info`. It does not publish or subscribe to anything else on its own.
+Topics start with the device name, made of the device type and chip ID (e.g. `light-d084cb`). On connection, the device publishes `online` (retained) on `<device name>/availability`, with `offline` as its last will, and its type, nickname, firmware version and IP address on `<device name>/info`. It does not publish or subscribe to anything else on its own.
 
 The sketch publishes and subscribes using `iot_kernel.mqtt` (a [PubSubClient](https://pubsubclient.knolleary.net/api)). `mqttBaseTopic`, `mqttStateTopic` and `mqttCommandTopic` provide conventional topic names, available after `init()`.
 
@@ -133,5 +133,6 @@ The device no longer has a built-in state:
 
 - `mqtt_publish_available()` and `mqtt_publish_info()` were removed: availability and info are published automatically on every connection.
 - When `mqtt.broker.port` is missing from the configuration, port 1883 is used.
+- Topics no longer start with the MQTT username: `<username>/<device name>/...` became `<device name>/...` (e.g. `moreillon/light-d084cb/state` became `light-d084cb/state`). Update the subscribers of these topics, such as Home Assistant.
 - ESPAsyncWebServer 3.x (ESP32Async) is required.
 - Re-upload the GUI.

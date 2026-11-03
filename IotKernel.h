@@ -150,7 +150,7 @@ class IotKernel {
     AsyncWebServer http;
     PubSubClient mqtt;
 
-    // Topic naming conventions, set by init() from the configuration
+    // Topic naming conventions, set by init(): <device name>/state, <device name>/command, ...
     // NOTE: the device subscribes and publishes to the state and command topics only if the sketch does so
     String mqttBaseTopic;
     String mqttStateTopic;

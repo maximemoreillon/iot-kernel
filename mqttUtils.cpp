@@ -2,8 +2,9 @@
 
 
 void IotKernel::mqtt_set_topics(){
-  // Topics only depend on the configuration, so they are available even without a connection
-  this->mqttBaseTopic = this->config.mqtt.username + "/" + this->deviceName;
+  // Topics only depend on the device name (type and chip ID), which is unique,
+  // so they are available even without a connection
+  this->mqttBaseTopic = this->deviceName;
   this->mqttStateTopic = this->mqttBaseTopic + "/state";
   this->mqttCommandTopic = this->mqttBaseTopic + "/command";
   this->mqttAvailabilityTopic = this->mqttBaseTopic + "/availability";
