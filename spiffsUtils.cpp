@@ -40,6 +40,7 @@ void IotKernel::get_config_from_spiffs(){
   // Missing keys default to an empty string (not "null")
   this->config.nickname = doc["nickname"] | "";
   this->config.hostname = doc["hostname"] | "";
+  this->config.admin_password = doc["admin_password"] | "";
   this->config.wifi.ssid = doc["wifi"]["ssid"] | "";
   this->config.wifi.password = doc["wifi"]["password"] | "";
   this->config.mqtt.broker.host = doc["mqtt"]["broker"]["host"] | "";

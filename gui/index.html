@@ -46,6 +46,25 @@
           <th>State</th>
           <td>%DEVICE_STATE%</td>
         </tr>
+        <tr>
+          <th>Admin password</th>
+          <td>
+            <input
+              type="password"
+              name="admin_password"
+              placeholder="Leave blank to keep current"
+            />
+            <label>
+              <input type="checkbox" name="admin_password_clear" />
+              Clear
+            </label>
+            <br />
+            <small>
+              Currently %ADMIN_PASSWORD_STATUS%. Protects this page (username:
+              admin) and, if at least 8 characters, the access point.
+            </small>
+          </td>
+        </tr>
       </table>
 
       <h2>Wifi</h2>
@@ -86,6 +105,10 @@
               value="%WIFI_PASSWORD%"
               placeholder="Leave blank to keep current"
             />
+            <label>
+              <input type="checkbox" name="wifi_password_clear" />
+              Clear
+            </label>
           </td>
         </tr>
       </table>
@@ -144,6 +167,10 @@
               value="%MQTT_PASSWORD%"
               placeholder="Leave blank to keep current"
             />
+            <label>
+              <input type="checkbox" name="mqtt_password_clear" />
+              Clear
+            </label>
           </td>
         </tr>
         <tr>

@@ -8,6 +8,7 @@
 #include <ArduinoJson.h> // JSON, used for the formatting of messages sent to the server
 #include <LittleFS.h>
 #include <Ticker.h>
+#include <functional>
 
 // Select ESP32 or ESP8266
 #ifdef ESP32
@@ -25,6 +26,8 @@
 #define IOT_KERNEL_VERSION "0.3.5"
 
 #define WIFI_STA_CONNECTION_TIMEOUT 20000
+#define WIFI_AP_STA_RETRY_PERIOD 300000 // While in AP mode, retry the configured WiFi every 5 minutes
+#define WIFI_AP_MIN_PASSWORD_LENGTH 8 // WPA2 requirement
 #define WIFI_AP_IP IPAddress(192, 168, 4, 1)
 
 #define MQTT_RECONNECT_PERIOD 5000
@@ -33,6 +36,7 @@
 
 #define DNS_PORT 53
 #define WEB_SERVER_PORT 80
+#define WEB_SERVER_ADMIN_USERNAME "admin"
 
 
 
@@ -57,6 +61,7 @@ struct MqttConfig {
 struct DeviceConfig {
   String nickname;
   String hostname;
+  String admin_password;
   WifiConfig wifi;
   MqttConfig mqtt;
 };
@@ -72,6 +77,19 @@ class IotKernel {
 
     DeviceConfig config;
 
+    std::function<void(const String&)> state_change_callback;
+    std::function<void()> wifi_connect_callback;
+    std::function<void()> wifi_disconnect_callback;
+    std::function<void()> mqtt_connect_callback;
+    std::function<void()> mqtt_disconnect_callback;
+
+    // Connection state tracking
+    boolean wifi_last_connection_state;
+    boolean mqtt_last_connection_state;
+    unsigned long mqtt_last_connection_attempt;
+    unsigned long wifi_ap_since; // When the AP was started (or STA last retried)
+    unsigned long wifi_sta_retry_start; // When the current STA retry from AP mode started, 0 if none
+
     // OTA safeguards
     // NOTE: if lastOtaWriteTime is unsigned long, millis() - lastOtaWriteTime will yield large number
     long lastOtaWriteTime;
@@ -81,6 +99,7 @@ class IotKernel {
     String get_chip_id();
     String get_device_name();
     boolean is_unset(String);
+    boolean has_admin_password();
 
     // SPIFFS
     void spiffs_setup();
@@ -91,14 +110,21 @@ class IotKernel {
     boolean wifi_connected();
     String get_softap_ssid();
     String get_wifi_mode();
+    void wifi_begin();
     void attempt_sta();
+    void start_ap();
     void wifi_setup();
     void wifi_connection_manager();
+    void wifi_ap_retry_manager();
 
     // Web server
     void http_setup();
     String htmlProcessor(const String&);
+    String htmlEscape(const String&);
     boolean isSameOrigin(AsyncWebServerRequest*);
+    boolean isAuthorized(AsyncWebServerRequest*);
+    void requireAuthentication(AsyncWebHandler&);
+    String updatedPassword(AsyncWebServerRequest*, const char*, const char*, const String&);
     String sanitizeUploadFilename(const String&);
     void handleNotFound(AsyncWebServerRequest*);
     void handleSettingsUpdate(AsyncWebServerRequest*);
@@ -110,6 +136,7 @@ class IotKernel {
 
     // MQTT
     void mqtt_setup();
+    void set_state_from_command(const char*);
     void handle_mqtt();
     void mqtt_connection_manager();
     void mqtt_message_callback(char*, byte*, unsigned int);
@@ -139,6 +166,18 @@ class IotKernel {
     void mqtt_publish_state();
     void mqtt_publish_available();
     void mqtt_publish_info();
+
+    // Called when the state is changed by an MQTT command
+    void onStateChange(std::function<void(const String&)> callback);
+
+    // Called when the connection to the configured WiFi is established or lost
+    void onWifiConnect(std::function<void()> callback);
+    void onWifiDisconnect(std::function<void()> callback);
+
+    // Called when the connection to the MQTT broker is established or lost
+    // NOTE: onMqttConnect is called after subscribing and publishing state, availability and info
+    void onMqttConnect(std::function<void()> callback);
+    void onMqttDisconnect(std::function<void()> callback);
 };
 
 #endif

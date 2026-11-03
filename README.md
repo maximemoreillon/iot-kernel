@@ -39,6 +39,39 @@ Those are the endpoints of the Web server.
 | /upload   | POST   | Endpoint to upload new GUI files, as multipart/form-data              |
 | /settings | POST   | Endpoint to update the settings stored in SPIFFS                      |
 
+## Usage
+
+```cpp
+IotKernel iot_kernel("device", "0.0.1");
+
+void setup() {
+  iot_kernel.init();
+
+  // Called when the state is changed by an MQTT command
+  iot_kernel.onStateChange([](const String& state) {
+    // e.g. digitalWrite(RELAY_PIN, state == "on");
+  });
+
+  // Connection events
+  iot_kernel.onWifiConnect([]() { /* ... */ });
+  iot_kernel.onWifiDisconnect([]() { /* ... */ });
+  iot_kernel.onMqttConnect([]() { /* e.g. publish extra topics */ });
+  iot_kernel.onMqttDisconnect([]() { /* ... */ });
+}
+
+void loop() {
+  iot_kernel.loop();
+}
+```
+
+## Security
+
+- **Admin password**: when set in the settings form, the web interface requires authentication (username `admin`). If it is at least 8 characters long, it is also used as the WiFi password of the access point, which is otherwise an open network. If the password is lost, re-upload `config.json` using the LittleFS upload tool.
+- **Broker certificate**: with SSL enabled, the connection to the broker is encrypted but the broker's certificate is not verified.
+- Password fields are never sent back to the browser: leave a field blank to keep the current password, or tick "Clear" to remove it.
+
 ## Notes
 
 Providing an emtpy string as MQTT broker disables MQTT functions.
+
+If the configured WiFi cannot be reached at boot, the device starts an access point and retries the configured WiFi every 5 minutes while no client is connected to the access point.

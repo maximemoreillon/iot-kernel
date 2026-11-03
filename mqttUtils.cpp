@@ -22,7 +22,6 @@ void IotKernel::mqtt_setup(){
 
 
   this->mqtt.setServer(this->config.mqtt.broker.host.c_str(), this->config.mqtt.broker.port);
-  this->mqtt.setCallback([this](char* topic, byte* payload, unsigned int payload_length) { mqtt_message_callback(topic, payload, payload_length); });
 
   // MQTT topics
   this->mqtt_base_topic = this->config.mqtt.username + "/" + this->device_name;
@@ -37,11 +36,8 @@ void IotKernel::mqtt_setup(){
 
 void IotKernel::mqtt_connection_manager(){
 
-  static boolean last_connection_state = false;
-  static long last_connection_attempt;
-
-  if(this->mqtt.connected() != last_connection_state) {
-    last_connection_state = this->mqtt.connected();
+  if(this->mqtt.connected() != this->mqtt_last_connection_state) {
+    this->mqtt_last_connection_state = this->mqtt.connected();
 
     if(this->mqtt.connected()){
       // Changed from disconnected to connected
@@ -53,36 +49,27 @@ void IotKernel::mqtt_connection_manager(){
       this->mqtt_publish_state();
       this->mqtt_publish_available();
       this->mqtt_publish_info();
+
+      if(this->mqtt_connect_callback) this->mqtt_connect_callback();
     }
     else {
       // Changed from connected to disconnected
       Serial.printf("[MQTT] Disconnected (state: %d)\n", this->mqtt.state());
+      if(this->mqtt_disconnect_callback) this->mqtt_disconnect_callback();
     }
   }
 
   // Kind of similar to the pubsubclient example, one connection attempt every 5 seconds
   if(!this->mqtt.connected()){
-    if(millis() - last_connection_attempt > MQTT_RECONNECT_PERIOD){
-      last_connection_attempt = millis();
+    if(millis() - this->mqtt_last_connection_attempt > MQTT_RECONNECT_PERIOD){
+      this->mqtt_last_connection_attempt = millis();
 
       // No need to do anything if not connected to WiFi
       if(!wifi_connected()) return;
 
       Serial.printf("[MQTT] Connecting... (state: %d)\n",this->mqtt.state());
 
-
-      // Last will
-      JsonDocument outbound_JSON_message;
-
-      outbound_JSON_message["connected"] = false;
-      outbound_JSON_message["type"] = this->device_type;
-      outbound_JSON_message["version"] = this->firmware_version;
-      outbound_JSON_message["nickname"] = this->config.nickname;
-
-      char mqtt_last_will[MQTT_MAX_PACKET_SIZE];
-      serializeJson(outbound_JSON_message, mqtt_last_will, sizeof(mqtt_last_will));
-
-
+      // The last will marks the device as offline on the availability topic
       this->mqtt.connect(
         this->device_name.c_str(),
         // this->get_hostname().c_str(),
@@ -117,28 +104,32 @@ void IotKernel::mqtt_message_callback(char* topic, byte* payload, unsigned int p
   DeserializationError error = deserializeJson(inbound_JSON_message, payload, payload_length);
 
   if(!error && inbound_JSON_message["state"].is<const char*>()){
-    const char* command = inbound_JSON_message["state"];
-    if(strcasecmp(command, "on") == 0) {
-      this->device_state = "on";
-      this->mqtt_publish_state();
-    }
-    else if(strcasecmp(command, "off") == 0) {
-      this->device_state = "off";
-      this->mqtt_publish_state();
-    }
+    this->set_state_from_command(inbound_JSON_message["state"].as<const char*>());
   }
   else {
     // Plain-text payload: require an exact (case-insensitive) match
-    if(payload_length == 2 && strncasecmp((const char*) payload, "on", 2) == 0) {
-      this->device_state = "on";
-      this->mqtt_publish_state();
+    char command[4] = "";
+    if(payload_length < sizeof(command) && !memchr(payload, '\0', payload_length)) {
+      memcpy(command, payload, payload_length);
+      command[payload_length] = '\0';
     }
-    else if(payload_length == 3 && strncasecmp((const char*) payload, "off", 3) == 0) {
-      this->device_state = "off";
-      this->mqtt_publish_state();
-    }
+    this->set_state_from_command(command);
   }
 
+}
+
+void IotKernel::set_state_from_command(const char* command) {
+
+  String new_state;
+  if(strcasecmp(command, "on") == 0) new_state = "on";
+  else if(strcasecmp(command, "off") == 0) new_state = "off";
+  else return;
+
+  boolean changed = new_state != this->device_state;
+  this->device_state = new_state;
+  this->mqtt_publish_state();
+
+  if(changed && this->state_change_callback) this->state_change_callback(this->device_state);
 }
 
 void IotKernel::mqtt_publish_state(){
