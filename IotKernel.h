@@ -1,11 +1,14 @@
 #ifndef IotKernel_h
 #define IotKernel_h
 
+// NOTE: ArduinoJson must be included before ESPAsyncWebServer, which checks for it with __has_include:
+// with GCC 10 (ESP8266), a failed __has_include makes a later #include of the same file silently do nothing
+// (GCC bug 80753), so the Arduino build tools would never add ArduinoJson to the include path
+#include <ArduinoJson.h> // JSON, used for the formatting of messages sent to the server
 #include <PubSubClient.h> // MQTT
 #include <WiFiClientSecure.h> // Wifi client, used by MQTT
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h> // DNS server to redirect wifi clients to the web server
-#include <ArduinoJson.h> // JSON, used for the formatting of messages sent to the server
 #include <LittleFS.h>
 #include <Ticker.h>
 #include <functional>

@@ -22,6 +22,8 @@ IoT Kernel takes care of what every device needs: connecting to WiFi, being conf
 
 Additionally, using this library involves static files that can be uploaded to ESP boards (LittleFS) using their respective filesystem uploaders.
 
+On ESP8266, include `IotKernel.h` before `ESPAsyncWebServer.h` and `ArduinoJson.h` in sketches: because of a GCC 10 bug, including ESPAsyncWebServer first can prevent ArduinoJson from being found.
+
 ## Flashing
 
 1. Upload the GUI to the board using the LittleFS upload tool
